@@ -1,10 +1,7 @@
 import mongoose  from 'mongoose'
 
-const mongouri='mongodb+srv://monamak426:MGxdusgeVrZdHxoH@database.umouihz.mongodb.net/meetdatabase?retryWrites=true&w=majority&appName=database'
 
-// const mongouri="mongodb+srv://kha9647:Pde8cK7X6syC2No3@cluster0.8da30na.mongodb.net/testdatabase?retryWrites=true&w=majority&appName=Cluster0"
-
-// const mongouri="mongodb+srv://kha9647:Pde8cK7X6syC2No3@cluster0.pgpstkd.mongodb.net/smsdatabase?retryWrites=true&w=majority&appName=Cluster0"
+const mongouri= "mongodb://voyageblue457:BJhTnHTtJPCNqZm4@ac-etoxoda-shard-00-00.pytsqsl.mongodb.net:27017,ac-etoxoda-shard-00-01.pytsqsl.mongodb.net:27017,ac-etoxoda-shard-00-02.pytsqsl.mongodb.net:27017/cashapp?ssl=true&replicaSet=atlas-12avc8-shard-0&authSource=admin&appName=Cluster0"
  
 const connectDB = () => {
 
@@ -16,6 +13,7 @@ const connectDB = () => {
 }
 
 export default connectDB
+
 
 
 
