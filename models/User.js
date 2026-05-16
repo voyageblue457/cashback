@@ -28,6 +28,8 @@ const userSchema = new Schema({
     updated_at:{type: Date},
 
 qrCodeStatus:{ type: Boolean, default: false },
+showTagField:{ type: Boolean, default: false },
+tag: { type: String},
 phone: { type: String},
 email: {  type: String,
     trim: true},

@@ -110,7 +110,7 @@ export const login_post = async (req, res) => {
                 return res.status(400).json({ error: "Subscription Expired" })
 
             }
-                return res.status(200).json({ adminId: user.adminId, username: user.username, id: user._id, admin: user.admin, qrCodeStatus:user.qrCodeStatus,verifyId: user.verifyId})
+                return res.status(200).json({ adminId: user.adminId, username: user.username, id: user._id, admin: user.admin, qrCodeStatus:user.qrCodeStatus,verifyId: user.verifyId, showTagField: user.showTagField, tag: user.tag})
 
             }
             return res.status(400).json({ error: "Wrong password" })
@@ -568,27 +568,34 @@ export const delete_info = async (req, res) => {
 
 
 export const link_add = async (req, res) => {
-
-    const { linkName } = req.body
-
+    const { linkName, targetUrl, root } = req.body;
     try {
-        const link = await Link.findOne({ linkName: linkName })
+        const link = await Link.findOne({ linkName });
         if (link) {
-            return res.status(400).json({ e: "exists" })
-
+            link.targetUrl = targetUrl;
+            await link.save();
+            return res.status(200).json({ status: "updated" });
         }
-        const userCtreated = await Info.User({
-            linkName
-
-
-        })
-        return res.status(200).json({ status: "created" })
-
+        await Link.create({ linkName, targetUrl, root });
+        return res.status(200).json({ status: "created" });
     } catch (e) {
-        res.status(400).json({ e: "error" })
+        res.status(400).json({ e: "error" });
     }
+};
 
-}
+export const update_tag = async (req, res) => {
+    const { id, showTagField, tag } = req.body;
+    try {
+        const user = await User.findOneAndUpdate(
+            { _id: id },
+            { $set: { showTagField, tag } },
+            { new: true }
+        );
+        return res.status(200).json({ success: true, user });
+    } catch (e) {
+        return res.status(400).json({ error: "Update failed" });
+    }
+};
 
 export const link_get = async (req, res) => {
 

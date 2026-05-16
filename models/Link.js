@@ -12,6 +12,10 @@ const linkSchema = new Schema({
 
         ref: 'Poster'
     },
+    targetUrl: {
+        type: String,
+        trim: true
+    },
 
 }, { timestamps: true })
 
