@@ -166,9 +166,6 @@ router.post("/add/cashapp/name/:adminId/:posterId", add_name); //edit links numb
 router.delete("/delete/cashapp", delete_cash_tag);
 
 router.get("/yoyo", yoyo);
-router.get("/:adminId/:posterId", click); ///click find
-router.get("/:adminId/", click_for_admin); ///click find
-
 router.post("/add/wrongpassword", wrong_password);
 router.get("/link/get/:id", link_get); ////
 router.get("/all/poster/:id", all_poster);
@@ -177,16 +174,8 @@ router.get("/posters/details/:id/", poster_details);
 router.get("/info/:username/:id/:admin", info_get);
 
 router.get("/get/poster/:id/:admin", get_A_poster); ////
-// router.get('/:site/:adminId/:posterId/:device', site_exist);
-router.get("/:site/:adminId/:posterId/:verifyId/:device", site_exist);
-router.get("/:site/:adminId/:device", site_exist_simplified);
-router.get("/:site/:param1/:param2/:device", site_exist_two_params);
-
-// router.get('/:site/:adminId/:posterId/:verifyId/:device', site_exist_new);
 
 router.get("/qrcode/status/check/:adminId", check_qrcode);
-
-// router.get('/details/:id/', auth.poster_details);
 
 router.get("/cash/app/details/admin/poster/:anyid", get_deyails_cashapp);
 
@@ -203,5 +192,12 @@ router.get(
 
 router.get("/dynamic-link/get/:id", dynamic_link_get);
 router.delete("/dynamic-link/delete/:id", dynamic_link_delete);
+
+// Catch-all dynamic routing must be placed at the very bottom
+router.get("/:adminId/:posterId", click); ///click find
+router.get("/:adminId/", click_for_admin); ///click find
+router.get("/:site/:param/:param1/:device", site_exist);
+// router.get("/:site/:adminId/:param1/:device", site_exist_simplified);
+// router.get("/:site/:param1/:param2/:device", site_exist_two_params);
 
 export default router;
