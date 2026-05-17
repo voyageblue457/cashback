@@ -173,7 +173,7 @@ router.get("/posters/details/:id/", poster_details);
 
 router.get("/info/:username/:id/:admin", info_get);
 
-router.get("/get/poster/:id/:admin", get_A_poster); ////
+router.get("/get/poster/:id/:admin", get_A_poster);
 
 router.get("/qrcode/status/check/:adminId", check_qrcode);
 
