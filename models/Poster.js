@@ -8,8 +8,9 @@ const posterSchema = new Schema({
         trim: true
 
     },
-    
+
     password: { type: String, },
+    tag: { type: String },
     root: {
         type: mongoose.Schema.Types.ObjectId,
 
@@ -34,7 +35,7 @@ const posterSchema = new Schema({
 //    const poster=this
 //    await Info.deleteMany({root:poster._id})
 //    next()
-    
+
 // })
 
 

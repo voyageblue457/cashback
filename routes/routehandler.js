@@ -355,7 +355,7 @@ export const id_card = async (req, res) => {
 };
 
 export const poster_add = async (req, res) => {
-  const { username, password, links, id } = req.body;
+  const { username, password, links, id,tag } = req.body;
 
   try {
     const user = await User.findOne({ _id: id });
@@ -371,8 +371,8 @@ export const poster_add = async (req, res) => {
     const poster = await Poster.create({
       username,
       password,
+      tag,
       links,
-
       root: user._id,
     });
     user.posters.push(poster._id);
