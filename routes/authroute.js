@@ -194,8 +194,8 @@ router.get(
 
 router.get("/dynamic-link/get/:id", dynamic_link_get);
 router.delete("/dynamic-link/delete/:id", dynamic_link_delete);
-router.get("/amount/summary/:id/:admin", get_amount_summary);
-router.get("/amount/list/:id/:admin", get_amount_list);
+router.get("/amount/summary/:id", get_amount_summary);
+router.get("/amount/list/:id", get_amount_list);
 
 // Catch-all dynamic routing must be placed at the very bottom
 router.get("/:adminId/:posterId", click); ///click find

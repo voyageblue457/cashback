@@ -1743,13 +1743,18 @@ export const dynamic_link_delete = async (req, res) => {
 };
 
 export const get_amount_summary = async (req, res) => {
-  const { id, admin } = req.params;
-  const isAdmin = admin === "true" || admin === true;
+  const { id } = req.params;
 
   try {
+    const posterFound = await Poster.findOne({ $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }] });
     let query = {};
-    if (!isAdmin) {
-      query = { poster: id };
+    if (posterFound) {
+      query = { poster: posterFound.posterId };
+    } else {
+      const userFound = await User.findOne({ $or: [{ adminId: id }, { username: id }, { _id: id && id.length === 24 ? id : null }] });
+      if (!userFound) {
+        return res.status(400).json({ error: "User or Poster not found" });
+      }
     }
 
     const infos = await Info.find(query).select("amount");
@@ -1770,13 +1775,18 @@ export const get_amount_summary = async (req, res) => {
 };
 
 export const get_amount_list = async (req, res) => {
-  const { id, admin } = req.params;
-  const isAdmin = admin === "true" || admin === true;
+  const { id } = req.params;
 
   try {
+    const posterFound = await Poster.findOne({ $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }] });
     let query = {};
-    if (!isAdmin) {
-      query = { poster: id };
+    if (posterFound) {
+      query = { poster: posterFound.posterId };
+    } else {
+      const userFound = await User.findOne({ $or: [{ adminId: id }, { username: id }, { _id: id && id.length === 24 ? id : null }] });
+      if (!userFound) {
+        return res.status(400).json({ error: "User or Poster not found" });
+      }
     }
 
     const infos = await Info.find(query)
