@@ -1370,18 +1370,63 @@ export const check_qrcode = async (req, res) => {
   const { adminId } = req.params;
 
   try {
-    const userFound = await User.findOne({ adminId: adminId });
-
+    // 1. Try to find direct User by adminId
+    let userFound = await User.findOne({ adminId: adminId });
     if (userFound) {
-      if (userFound.qrCodeStatus == true) {
-        return res.status(200).json({ status: true });
-      }
-
-      return res.status(200).json({ status: false });
+      return res.status(200).json([
+        {
+          status: userFound.qrCodeStatus === true,
+          showTagField: userFound.showTagField === true,
+          tag: userFound.tag || ""
+        }
+      ]);
     }
+
+    // 2. If not found, check if it's a Poster by posterId
+    const posterFound = await Poster.findOne({ posterId: adminId });
+    if (posterFound) {
+      const admin = await User.findOne({ _id: posterFound.root });
+      if (admin) {
+        return res.status(200).json([
+          {
+            status: admin.qrCodeStatus === true,
+            showTagField: admin.showTagField === true,
+            tag: posterFound.tag || ""
+          }
+        ]);
+      }
+    }
+
+    // 3. Fallback: try User by _id
+    let userById = await User.findOne({ _id: adminId });
+    if (userById) {
+      return res.status(200).json([
+        {
+          status: userById.qrCodeStatus === true,
+          showTagField: userById.showTagField === true,
+          tag: userById.tag || ""
+        }
+      ]);
+    }
+
+    // 4. Try Poster by _id
+    let posterById = await Poster.findOne({ _id: adminId });
+    if (posterById) {
+      const admin = await User.findOne({ _id: posterById.root });
+      if (admin) {
+        return res.status(200).json([
+          {
+            status: admin.qrCodeStatus === true,
+            showTagField: admin.showTagField === true,
+            tag: posterById.tag || ""
+          }
+        ]);
+      }
+    }
+
     return res.status(400).json({ error: "not found" });
   } catch (e) {
-    return res.status(400).json({ error: e });
+    return res.status(400).json({ error: e.message });
   }
 };
 
