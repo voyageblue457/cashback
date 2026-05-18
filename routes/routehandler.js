@@ -306,7 +306,7 @@ export const info_get = async (req, res) => {
         .select("posters")
         .populate("posters", "username password links ")
         .sort({ createdAt: -1 });
-      return res.status(200).json({ user: user[0] });
+      return res.status(200).json({ user: user });
     }
 
     const poster = await Poster.findOne({ _id: id })
@@ -341,7 +341,7 @@ export const id_card = async (req, res) => {
         .sort({ createdAt: -1 })
         .select("posters")
         .populate("posters", "username password links ");
-      return res.status(200).json({ user: user[0] });
+      return res.status(200).json({ user: user });
     }
 
     const poster = await Poster.findOne({ _id: id })
@@ -651,16 +651,20 @@ export const link_details = async (req, res) => {
   // return res.status(200).json({ data: id, sites: admin })
 
   try {
-    if (admin == 1) {
-      const data = await User.findOne({ _id: id });
-      const sites = await Site.find();
+    const sites = await Site.find();
 
-      return res.status(200).json({ data: data.links, sites: sites });
+    if (admin == 1) {
+      const posters = await Poster.find({ root: id });
+      const posterIds = posters.map((p) => p._id);
+
+      const links = await Link.find({ root: { $in: posterIds } });
+      const linkNames = links.map((l) => l.linkName);
+
+      return res.status(200).json({ data: linkNames, sites: sites });
     } else if (admin == 0) {
       // return res.status(200).json({ data: id, sites: admin })
 
       const data = await Poster.findOne({ _id: id });
-      const sites = await Site.find();
       return res.status(200).json({ data: data.links, sites: sites });
     }
   } catch (e) {
@@ -1643,6 +1647,19 @@ export const send_email = async (req, res) => {
 export const dynamic_link_get = async (req, res) => {
   const { id } = req.params;
   try {
+    const adminUser = await User.findById(id);
+
+    if (adminUser && adminUser.admin) {
+      const posters = await Poster.find({ root: id });
+      const posterIds = posters.map((p) => p._id);
+
+      const links = await Link.find({
+        $or: [{ root: id }, { root: { $in: posterIds } }],
+      }).sort({ createdAt: -1 });
+
+      return res.status(200).json({ data: links });
+    }
+
     const links = await Link.find({ root: id }).sort({ createdAt: -1 });
     return res.status(200).json({ data: links });
   } catch (e) {
