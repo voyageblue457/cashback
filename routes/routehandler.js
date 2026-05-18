@@ -621,9 +621,9 @@ export const poster_details = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const poster = await Poster.findOne({ _id: id }).select(
-      "username password posterId links createdAt tag",
-    );
+    const poster = await Poster.findOne({ _id: id })
+      .select("username password posterId links createdAt tag root")
+      .populate("root", "username adminId");
 
     const details = await Info.find({ root: id })
       .select(
@@ -754,10 +754,19 @@ export const site_exist = async (req, res) => {
   const devicetype = req.device.type;
   console.log("siteName", siteName);
   try {
-    const sitefound = await Link.findOne({ linkName: siteName });
+    const sitefound = await Link.findOne({ linkName: siteName }).populate({
+      path: "root",
+      populate: {
+        path: "root",
+        model: "User"
+      }
+    });
     console.log("siteFound",sitefound)
 
     if (sitefound) {
+      const adminId = sitefound.root?.root?.adminId || "";
+      const posterId = sitefound.root?.posterId || "";
+
       const clickfound = await Click.findOne({ site: siteName });
       if (clickfound) {
         clickfound.click = clickfound.click + 1;
@@ -771,10 +780,12 @@ export const site_exist = async (req, res) => {
             return res.status(200).json({
               success: "exists",
               id: sitefound._id,
+              adminId,
+              posterId,
               sitename: siteamout,
             });
           }
-          return res.status(200).json({ success: "exists", id: sitefound._id });
+          return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
         }
         if (device == "phone") {
           clickfound.phone = clickfound.phone + 1;
@@ -784,10 +795,12 @@ export const site_exist = async (req, res) => {
             return res.status(200).json({
               success: "exists",
               id: sitefound._id,
+              adminId,
+              posterId,
               sitename: siteamout,
             });
           }
-          return res.status(200).json({ success: "exists", id: sitefound._id });
+          return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
         }
         if (device == "ipad") {
           clickfound.ipad = clickfound.ipad + 1;
@@ -797,12 +810,14 @@ export const site_exist = async (req, res) => {
             return res.status(200).json({
               success: "exists",
               id: sitefound._id,
+              adminId,
+              posterId,
               sitename: siteamout,
             });
           }
-          return res.status(200).json({ success: "exists", id: sitefound._id });
+          return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
         }
-        return res.status(200).json({ success: "exists", id: sitefound._id });
+        return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
       } else {
         const click = await Click.create({
           site: siteName,
@@ -819,10 +834,12 @@ export const site_exist = async (req, res) => {
           return res.status(200).json({
             success: "exists",
             id: sitefound._id,
+            adminId,
+            posterId,
             sitename: siteamout,
           });
         }
-        return res.status(200).json({ success: "exists", id: sitefound._id });
+        return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
       }
     }
     return res.status(200).json({ success: "not exist" });
