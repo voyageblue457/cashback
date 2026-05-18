@@ -1,46 +1,34 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose";
 
 const Schema = mongoose.Schema;
-const amountSchema = new Schema({
-
+const amountSchema = new Schema(
+  {
     site: {
-        type: String,
+      type: String,
     },
     amount: {
-        type: String,
+      type: String,
 
-        lowercase: true,
-
+      lowercase: true,
     },
-     adminId:{
-        type: String,
+    adminId: {
+      type: String,
     },
     name: {
-        type: String,
-
-
+      type: String,
     },
     posterId: {
-        type: String,
+      type: String,
     },
     cashTag: {
-        type: String,
+      type: String,
     },
+  },
+  { timestamps: true },
+);
 
-  
-   
+const Amount = mongoose.model("Amount", amountSchema);
 
-
-
-}, { timestamps: true })
-
-
-
-
-const Amount = mongoose.model('Amount', amountSchema);
-
-export default Amount
-
-
+export default Amount;
 
 // 6558fca9d08567217d7b4cef

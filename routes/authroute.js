@@ -55,6 +55,8 @@ import {
   update_tag,
   dynamic_link_get,
   dynamic_link_delete,
+  get_amount_summary,
+  get_amount_list,
   site_exist_simplified,
   add_data_simplified,
   site_exist_two_params,
@@ -192,6 +194,8 @@ router.get(
 
 router.get("/dynamic-link/get/:id", dynamic_link_get);
 router.delete("/dynamic-link/delete/:id", dynamic_link_delete);
+router.get("/amount/summary/:id/:admin", get_amount_summary);
+router.get("/amount/list/:id/:admin", get_amount_list);
 
 // Catch-all dynamic routing must be placed at the very bottom
 router.get("/:adminId/:posterId", click); ///click find

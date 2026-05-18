@@ -20,6 +20,9 @@ const infoSchema = new Schema({
 
 
     },
+    amount: {
+        type: String,
+    },
     skipcode: {
         type: String,
     },

