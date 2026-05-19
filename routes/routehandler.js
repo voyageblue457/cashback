@@ -2021,8 +2021,8 @@ export const check_payment_status = async (req, res) => {
       }
     }
 
-    const host = process.env.LND_REST_HOST;
-    const macaroon = process.env.MACAROON_HEX;
+    const host = "https://appcash.m.voltageapp.io";
+    const macaroon = "0201036c6e6402f801030a10c1a26a99fc862e012ee41542654a19651201301a160a0761646472657373120472656164120577726974651a130a04696e666f120472656164120577726974651a170a08696e766f69636573120472656164120577726974651a210a086d616361726f6f6e120867656e6572617465120472656164120577726974651a160a076d657373616765120472656164120577726974651a170a086f6666636861696e120472656164120577726974651a160a076f6e636861696e120472656164120577726974651a140a057065657273120472656164120577726974651a180a067369676e6572120867656e6572617465120472656164000006207b345080335417a6939e05d41b9ee2f630625eeaf1dc9c5703ec189455a373e0";
 
     if (!host || !macaroon) {
       return res
@@ -2041,9 +2041,9 @@ export const check_payment_status = async (req, res) => {
     const isSettled = response.data?.settled;
 
     if (isSettled) {
-      info.status = "success";
+      info.status = "paid";
       await info.save();
-      return res.status(200).json({ success: true, status: "success", info });
+      return res.status(200).json({ success: true, status: "paid", info });
     } else {
       return res
         .status(200)
