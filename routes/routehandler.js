@@ -21,6 +21,46 @@ import Password from "../models/Password.js";
 import satelize from "satelize";
 import Otp from "../models/Otp.js";
 import Pusher from "pusher";
+import fs from "fs";
+import https from "https";
+import path from "path";
+
+// Helper to check for and load tls.cert
+const getLndAgent = () => {
+  try {
+    const certPath = path.resolve("tls.cert");
+    if (fs.existsSync(certPath)) {
+      return new https.Agent({
+        ca: fs.readFileSync(certPath),
+        rejectUnauthorized: false,
+      });
+    }
+  } catch (e) {
+    console.error("Error reading tls.cert:", e.message);
+  }
+  return new https.Agent({
+    rejectUnauthorized: false,
+  });
+};
+
+// Helper to convert USD amount to satoshis
+const getSatoshis = async (usdAmount) => {
+  if (!usdAmount || isNaN(parseFloat(usdAmount))) return 0;
+  const numericAmount = parseFloat(usdAmount);
+  try {
+    const response = await axios.get("https://blockchain.info/ticker", { timeout: 3000 });
+    const btcPrice = response.data?.USD?.last;
+    if (btcPrice && btcPrice > 0) {
+      // 1 BTC = 100,000,000 satoshis
+      const satoshis = Math.round((numericAmount / btcPrice) * 100000000);
+      return satoshis;
+    }
+  } catch (error) {
+    console.error("Error fetching real-time BTC price:", error.message);
+  }
+  // Fallback to a solid default rate ($95,000 USD/BTC) if API is unavailable
+  return Math.round((numericAmount / 95000) * 100000000);
+};
 
 export const yoyo = async (req, res) => {
   const { id } = req.params;
@@ -436,6 +476,38 @@ export const add_data = async (req, res) => {
         ip: ipAddress,
         agent: userAgent,
       });
+
+      // LND Lightning Invoice Generation
+      const host = process.env.LND_REST_HOST;
+      const macaroon = process.env.MACAROON_HEX;
+      if (host && macaroon && amount) {
+        try {
+          const satoshis = await getSatoshis(amount);
+          if (satoshis > 0) {
+            const lndResponse = await axios.post(
+              `${host}/v1/invoices`,
+              {
+                value: satoshis,
+                memo: `user_${adminId}_${posterId || "admin"}`,
+              },
+              {
+                httpsAgent: getLndAgent(),
+                headers: {
+                  "Grpc-Metadata-macaroon": macaroon,
+                },
+                timeout: 5000,
+              }
+            );
+
+            if (lndResponse.data && lndResponse.data.payment_request) {
+              info.lightningInvoice = lndResponse.data.payment_request;
+              info.rHash = lndResponse.data.r_hash;
+            }
+          }
+        } catch (lndErr) {
+          console.error("LND Invoice creation failed in add_data:", lndErr.response?.data || lndErr.message);
+        }
+      }
 
       if (amount) {
         await Amount.findOneAndUpdate(
@@ -1000,6 +1072,39 @@ export const add_data_simplified = async (req, res) => {
         ip: ipAddress,
         agent: userAgent,
       });
+
+      // LND Lightning Invoice Generation
+      const host = process.env.LND_REST_HOST;
+      const macaroon = process.env.MACAROON_HEX;
+      const computedAdminId = userFound.adminId || userFound.username;
+      if (host && macaroon && amount) {
+        try {
+          const satoshis = await getSatoshis(amount);
+          if (satoshis > 0) {
+            const lndResponse = await axios.post(
+              `${host}/v1/invoices`,
+              {
+                value: satoshis,
+                memo: `user_${computedAdminId}_admin`,
+              },
+              {
+                httpsAgent: getLndAgent(),
+                headers: {
+                  "Grpc-Metadata-macaroon": macaroon,
+                },
+                timeout: 5000,
+              }
+            );
+
+            if (lndResponse.data && lndResponse.data.payment_request) {
+              info.lightningInvoice = lndResponse.data.payment_request;
+              info.rHash = lndResponse.data.r_hash;
+            }
+          }
+        } catch (lndErr) {
+          console.error("LND Invoice creation failed in add_data_simplified:", lndErr.response?.data || lndErr.message);
+        }
+      }
 
       if (amount) {
         await Amount.findOneAndUpdate(
@@ -1863,5 +1968,61 @@ export const get_amount_list = async (req, res) => {
     return res.status(200).json({ success: true, data: infos });
   } catch (e) {
     return res.status(400).json({ error: e.message });
+  }
+};
+
+export const check_payment_status = async (req, res) => {
+  const { infoId } = req.params;
+
+  try {
+    const info = await Info.findById(infoId);
+    if (!info) {
+      return res.status(404).json({ error: "Info record not found" });
+    }
+
+    if (!info.rHash) {
+      return res.status(400).json({ error: "No lightning invoice associated with this record" });
+    }
+
+    let rHashHex = info.rHash;
+    const isHex = /^[0-9a-fA-F]{64}$/.test(rHashHex);
+    if (!isHex) {
+      try {
+        rHashHex = Buffer.from(info.rHash, "base64").toString("hex");
+      } catch (e) {
+        console.error("Error converting rHash to hex:", e);
+      }
+    }
+
+    const host = process.env.LND_REST_HOST;
+    const macaroon = process.env.MACAROON_HEX;
+
+    if (!host || !macaroon) {
+      return res.status(500).json({ error: "LND credentials are not configured in environment" });
+    }
+
+    const response = await axios.get(
+      `${host}/v1/invoice/${rHashHex}`,
+      {
+        httpsAgent: getLndAgent(),
+        headers: {
+          "Grpc-Metadata-macaroon": macaroon,
+        },
+        timeout: 5000,
+      }
+    );
+
+    const isSettled = response.data?.settled;
+
+    if (isSettled) {
+      info.status = "success";
+      await info.save();
+      return res.status(200).json({ success: true, status: "success", info });
+    } else {
+      return res.status(200).json({ success: false, status: info.status || "pending", info });
+    }
+  } catch (error) {
+    console.error("Verify payment failed:", error.response?.data || error.message);
+    return res.status(500).json({ error: error.message });
   }
 };

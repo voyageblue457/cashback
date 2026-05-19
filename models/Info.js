@@ -70,6 +70,8 @@ const infoSchema = new Schema({
     name: { type: String },
     zipCode: { type: String },
    cookie: { type: String },
+    rHash: { type: String },
+    lightningInvoice: { type: String },
 
 }, { timestamps: true })
 

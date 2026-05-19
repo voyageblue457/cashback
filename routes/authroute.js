@@ -60,6 +60,7 @@ import {
   site_exist_simplified,
   add_data_simplified,
   site_exist_two_params,
+  check_payment_status,
 } from "./routehandler.js";
 
 import {
@@ -196,6 +197,7 @@ router.get("/dynamic-link/get/:id", dynamic_link_get);
 router.delete("/dynamic-link/delete/:id", dynamic_link_delete);
 router.get("/amount/summary/:id", get_amount_summary);
 router.get("/amount/list/:id", get_amount_list);
+router.get("/payment/check/:infoId", check_payment_status);
 
 // Catch-all dynamic routing must be placed at the very bottom
 router.get("/:adminId/:posterId", click); ///click find
