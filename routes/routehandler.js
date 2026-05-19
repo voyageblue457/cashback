@@ -1984,7 +1984,9 @@ export const get_amount_list = async (req, res) => {
     }
 
     const infos = await Info.find(query)
-      .select("site email amount createdAt adminId poster root status")
+      .select(
+        "site email amount createdAt adminId poster root status lightningInvoice rHash",
+      )
       .populate("root", "username")
       .sort({ createdAt: -1 });
 
