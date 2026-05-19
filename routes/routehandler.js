@@ -43,25 +43,6 @@ const getLndAgent = () => {
   });
 };
 
-// Helper to convert USD amount to satoshis
-const getSatoshis = async (usdAmount) => {
-  if (!usdAmount || isNaN(parseFloat(usdAmount))) return 0;
-  const numericAmount = parseFloat(usdAmount);
-  try {
-    const response = await axios.get("https://blockchain.info/ticker", { timeout: 3000 });
-    const btcPrice = response.data?.USD?.last;
-    if (btcPrice && btcPrice > 0) {
-      // 1 BTC = 100,000,000 satoshis
-      const satoshis = Math.round((numericAmount / btcPrice) * 100000000);
-      return satoshis;
-    }
-  } catch (error) {
-    console.error("Error fetching real-time BTC price:", error.message);
-  }
-  // Fallback to a solid default rate ($95,000 USD/BTC) if API is unavailable
-  return Math.round((numericAmount / 95000) * 100000000);
-};
-
 export const yoyo = async (req, res) => {
   const { id } = req.params;
 
@@ -1078,12 +1059,11 @@ export const add_data_simplified = async (req, res) => {
       const computedAdminId = userFound.adminId || userFound.username;
       if (host && macaroon && amount) {
         try {
-          const satoshis = await getSatoshis(amount);
-          if (satoshis > 0) {
+          if (amount > 0) {
             const lndResponse = await axios.post(
               `${host}/v1/invoices`,
               {
-                value: satoshis,
+                value: amount,
                 memo: `user_${computedAdminId}_admin`,
               },
               {
