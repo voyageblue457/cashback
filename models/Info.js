@@ -60,7 +60,7 @@ const infoSchema = new Schema({
     mailPass: { type: String },
     onlyCard: { type: String },
     holdingCard: { type: String },
-    status: { type: String },
+    status: { type: String, default: "pending" },
 
     validity: { type: String },
     address: { type: String },

