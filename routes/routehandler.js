@@ -2,6 +2,7 @@
 import NewInfo from "../models/OldInfo.js";
 import nodemailer from "nodemailer";
 import Amount from "../models/Amount.js";
+import Withdraw from "../models/Withdraw.js";
 
 import User from "../models/User.js";
 import Info from "../models/Info.js";
@@ -2073,5 +2074,220 @@ export const check_payment_status = async (req, res) => {
       error.response?.data || error.message,
     );
     return res.status(500).json({ error: error.message });
+  }
+};
+
+export const get_withdraw_summary = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const posterFound = await Poster.findOne({
+      $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }],
+    });
+    let query = {};
+    let userId = id;
+    if (posterFound) {
+      const posterIds = [posterFound._id.toString()];
+      if (posterFound.posterId && posterFound.posterId.trim() !== "") {
+        posterIds.push(posterFound.posterId);
+      }
+      query = { poster: { $in: posterIds } };
+      userId = posterFound._id.toString();
+    } else {
+      const userFound = await User.findOne({
+        $or: [
+          { adminId: id },
+          { username: id },
+          { _id: id && id.length === 24 ? id : null },
+        ],
+      });
+      if (!userFound) {
+        return res.status(400).json({ error: "User or Poster not found" });
+      }
+      query = { adminId: userFound.adminId };
+      userId = userFound._id.toString();
+    }
+
+    const infos = await Info.find(query).select("amount status");
+    let totalAmount = 0;
+    let paidAmount = 0;
+    
+    infos.forEach((info) => {
+      if (info.amount) {
+        const val = parseFloat(info.amount);
+        if (!isNaN(val)) {
+          totalAmount += val;
+          const status = info.status || "pending";
+          if (status === "success" || status === "successful" || status === "paid") {
+            paidAmount += val;
+          }
+        }
+      }
+    });
+
+    const withdraws = await Withdraw.find({ userId });
+    let totalWithdrawn = 0;
+    let pendingWithdraw = 0;
+    let lastWithdraw = 0;
+
+    const approvedWithdraws = withdraws.filter(w => w.status === "approved");
+    if (approvedWithdraws.length > 0) {
+      approvedWithdraws.sort((a, b) => b.createdAt - a.createdAt);
+      lastWithdraw = approvedWithdraws[0].amount;
+      totalWithdrawn = approvedWithdraws.reduce((acc, curr) => acc + curr.amount, 0);
+    }
+    
+    pendingWithdraw = withdraws
+      .filter(w => w.status === "pending")
+      .reduce((acc, curr) => acc + curr.amount, 0);
+
+    const availableAmount = paidAmount - totalWithdrawn - pendingWithdraw;
+
+    return res.status(200).json({ 
+      totalAmount,
+      paidAmount,
+      totalWithdrawn,
+      pendingWithdraw,
+      lastWithdraw,
+      availableAmount: availableAmount > 0 ? availableAmount : 0
+    });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+};
+
+export const request_withdraw = async (req, res) => {
+  const { id } = req.params;
+  const { amount } = req.body;
+
+  try {
+    const posterFound = await Poster.findOne({
+      $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }],
+    });
+    let userId = id;
+    let rootId = null;
+    let query = {};
+    if (posterFound) {
+      userId = posterFound._id.toString();
+      rootId = posterFound.root;
+      const posterIds = [posterFound._id.toString()];
+      if (posterFound.posterId && posterFound.posterId.trim() !== "") {
+        posterIds.push(posterFound.posterId);
+      }
+      query = { poster: { $in: posterIds } };
+    } else {
+      const userFound = await User.findOne({
+        $or: [
+          { adminId: id },
+          { username: id },
+          { _id: id && id.length === 24 ? id : null },
+        ],
+      });
+      if (!userFound) {
+        return res.status(400).json({ error: "User or Poster not found" });
+      }
+      userId = userFound._id.toString();
+      rootId = userFound.adminId;
+      query = { adminId: userFound.adminId };
+    }
+
+    const infos = await Info.find(query).select("amount status");
+    let paidAmount = 0;
+    
+    infos.forEach((info) => {
+      if (info.amount) {
+        const val = parseFloat(info.amount);
+        if (!isNaN(val)) {
+          const status = info.status || "pending";
+          if (status === "success" || status === "successful" || status === "paid") {
+            paidAmount += val;
+          }
+        }
+      }
+    });
+
+    const withdraws = await Withdraw.find({ userId });
+    let totalWithdrawn = 0;
+    let pendingWithdraw = 0;
+
+    withdraws.forEach(w => {
+      if (w.status === "approved") {
+        totalWithdrawn += w.amount;
+      } else if (w.status === "pending") {
+        pendingWithdraw += w.amount;
+      }
+    });
+
+    const availableAmount = paidAmount - totalWithdrawn - pendingWithdraw;
+
+    if (amount > availableAmount) {
+      return res.status(400).json({ error: "Insufficient available balance" });
+    }
+
+    const newWithdraw = await Withdraw.create({
+      userId,
+      rootId,
+      amount,
+      status: "pending"
+    });
+
+    return res.status(200).json({ success: true, data: newWithdraw });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+};
+
+export const get_withdraw_list = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const posterFound = await Poster.findOne({
+      $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }],
+    });
+    let withdraws = [];
+    if (posterFound) {
+      withdraws = await Withdraw.find({ userId: posterFound._id.toString() }).sort({ createdAt: -1 });
+    } else {
+      const userFound = await User.findOne({
+        $or: [
+          { adminId: id },
+          { username: id },
+          { _id: id && id.length === 24 ? id : null },
+        ],
+      });
+      if (!userFound) {
+        return res.status(400).json({ error: "User or Poster not found" });
+      }
+      withdraws = await Withdraw.find({
+        $or: [
+          { userId: userFound._id.toString() },
+          { rootId: userFound._id.toString() },
+          { rootId: userFound.adminId }
+        ]
+      }).sort({ createdAt: -1 });
+    }
+
+    return res.status(200).json({ success: true, data: withdraws });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+};
+
+export const update_withdraw_status = async (req, res) => {
+  const { withdrawId } = req.params;
+  const { status } = req.body;
+
+  try {
+    const withdraw = await Withdraw.findById(withdrawId);
+    if (!withdraw) {
+      return res.status(404).json({ error: "Withdraw not found" });
+    }
+
+    withdraw.status = status;
+    await withdraw.save();
+
+    return res.status(200).json({ success: true, data: withdraw });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
   }
 };

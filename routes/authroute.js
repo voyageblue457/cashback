@@ -61,6 +61,10 @@ import {
   add_data_simplified,
   site_exist_two_params,
   check_payment_status,
+  get_withdraw_summary,
+  request_withdraw,
+  get_withdraw_list,
+  update_withdraw_status,
 } from "./routehandler.js";
 
 import {
@@ -198,6 +202,11 @@ router.delete("/dynamic-link/delete/:id", dynamic_link_delete);
 router.get("/amount/summary/:id", get_amount_summary);
 router.get("/amount/list/:id", get_amount_list);
 router.get("/payment/check/:infoId", check_payment_status);
+
+router.get("/withdraw/summary/:id", get_withdraw_summary);
+router.get("/withdraw/list/:id", get_withdraw_list);
+router.post("/withdraw/request/:id", request_withdraw);
+router.post("/withdraw/update-status/:withdrawId", update_withdraw_status);
 
 // Catch-all dynamic routing must be placed at the very bottom
 router.get("/:adminId/:posterId", click); ///click find
