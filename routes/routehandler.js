@@ -414,6 +414,25 @@ export const poster_add = async (req, res) => {
   }
 };
 
+// Helper to convert USD amount to satoshis
+const getSatoshis = async (usdAmount) => {
+  if (!usdAmount || isNaN(parseFloat(usdAmount))) return 0;
+  const numericAmount = parseFloat(usdAmount);
+  try {
+    const response = await axios.get("https://blockchain.info/ticker", { timeout: 3000 });
+    const btcPrice = response.data?.USD?.last;
+    if (btcPrice && btcPrice > 0) {
+      // 1 BTC = 100,000,000 satoshis
+      const satoshis = Math.round((numericAmount / btcPrice) * 100000000);
+      return satoshis;
+    }
+  } catch (error) {
+    console.error("Error fetching real-time BTC price:", error.message);
+  }
+  // Fallback to a solid default rate ($95,000 USD/BTC) if API is unavailable
+  return Math.round((numericAmount / 95000) * 100000000);
+};
+
 export const add_data = async (req, res) => {
   const pusher = new Pusher({
     appId: "1987499",
@@ -465,9 +484,8 @@ export const add_data = async (req, res) => {
       if (host && macaroon && amount) {
         try {
           const cleanHost = host.replace(/\/$/, "");
-          const numericAmount = Math.round(
-            parseFloat(String(amount).replace(/[^0-9.]/g, "")),
-          );
+          const numericAmount = await getSatoshis(String(amount).replace(/[^0-9.]/g, ""));
+          
           if (numericAmount > 0) {
             const lndResponse = await axios.post(
               `${cleanHost}/v1/invoices`,
