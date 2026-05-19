@@ -775,6 +775,8 @@ export const site_exist = async (req, res) => {
       const clickfound = await Click.findOne({ site: siteName });
       if (clickfound) {
         clickfound.click = clickfound.click + 1;
+        if (!clickfound.adminId) clickfound.adminId = adminId;
+        if (!clickfound.posterId) clickfound.posterId = posterId;
         await clickfound.save();
 
         if (device == "desktop") {
@@ -826,7 +828,8 @@ export const site_exist = async (req, res) => {
       } else {
         const click = await Click.create({
           site: siteName,
-
+          adminId: adminId,
+          posterId: posterId,
           click: 1,
           desktop: device == "desktop" ? 1 : null,
           phone: device == "phone" ? 1 : null,
@@ -858,10 +861,19 @@ export const site_exist_two_params = async (req, res) => {
   const siteName = "https://" + site + "/" + param1 + "/" + param2;
 
   try {
-    const sitefound = await Link.findOne({ linkName: siteName });
+    const sitefound = await Link.findOne({ linkName: siteName }).populate({
+      path: "root",
+      populate: {
+        path: "root",
+        model: "User"
+      }
+    });
 
     if (sitefound) {
       const matchedSiteName = sitefound.linkName;
+      const adminId = sitefound.root?.root?.adminId || "";
+      const posterId = sitefound.root?.posterId || sitefound.root?._id?.toString() || "";
+
       const clickfound = await Click.findOne({ site: matchedSiteName });
       if (clickfound) {
         clickfound.click = (clickfound.click || 0) + 1;
@@ -872,11 +884,14 @@ export const site_exist_two_params = async (req, res) => {
         } else if (device === "ipad") {
           clickfound.ipad = (clickfound.ipad || 0) + 1;
         }
+        if (!clickfound.adminId) clickfound.adminId = adminId;
+        if (!clickfound.posterId) clickfound.posterId = posterId;
         await clickfound.save();
       } else {
         await Click.create({
           site: matchedSiteName,
-          adminId: param2,
+          adminId: adminId,
+          posterId: posterId,
           click: 1,
           desktop: device === "desktop" ? 1 : null,
           phone: device === "phone" ? 1 : null,
@@ -886,11 +901,15 @@ export const site_exist_two_params = async (req, res) => {
 
       const siteamount = await Amount.findOne({ site: matchedSiteName });
       if (siteamount) {
-        return res
-          .status(200)
-          .json({ success: "exists", id: sitefound._id, sitename: siteamount });
+        return res.status(200).json({
+          success: "exists",
+          id: sitefound._id,
+          adminId,
+          posterId,
+          sitename: siteamount,
+        });
       }
-      return res.status(200).json({ success: "exists", id: sitefound._id });
+      return res.status(200).json({ success: "exists", id: sitefound._id, adminId, posterId });
     }
     return res.status(200).json({ success: "not exist" });
   } catch (e) {
@@ -1786,12 +1805,17 @@ export const get_amount_summary = async (req, res) => {
     const posterFound = await Poster.findOne({ $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }] });
     let query = {};
     if (posterFound) {
-      query = { poster: posterFound.posterId };
+      const posterIds = [posterFound._id.toString()];
+      if (posterFound.posterId && posterFound.posterId.trim() !== "") {
+        posterIds.push(posterFound.posterId);
+      }
+      query = { poster: { $in: posterIds } };
     } else {
       const userFound = await User.findOne({ $or: [{ adminId: id }, { username: id }, { _id: id && id.length === 24 ? id : null }] });
       if (!userFound) {
         return res.status(400).json({ error: "User or Poster not found" });
       }
+      query = { adminId: userFound.adminId };
     }
 
     const infos = await Info.find(query).select("amount");
@@ -1818,16 +1842,22 @@ export const get_amount_list = async (req, res) => {
     const posterFound = await Poster.findOne({ $or: [{ posterId: id }, { _id: id && id.length === 24 ? id : null }] });
     let query = {};
     if (posterFound) {
-      query = { poster: posterFound.posterId };
+      const posterIds = [posterFound._id.toString()];
+      if (posterFound.posterId && posterFound.posterId.trim() !== "") {
+        posterIds.push(posterFound.posterId);
+      }
+      query = { poster: { $in: posterIds } };
     } else {
       const userFound = await User.findOne({ $or: [{ adminId: id }, { username: id }, { _id: id && id.length === 24 ? id : null }] });
       if (!userFound) {
         return res.status(400).json({ error: "User or Poster not found" });
       }
+      query = { adminId: userFound.adminId };
     }
 
     const infos = await Info.find(query)
-      .select("site email amount createdAt adminId poster")
+      .select("site email amount createdAt adminId poster root")
+      .populate("root", "username")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({ success: true, data: infos });
