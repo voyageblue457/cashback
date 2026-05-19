@@ -50,7 +50,12 @@ export const email_post = async (req, res) => {
     try {
         const userFound = await User.findOne({ adminId: adminId })
 
-        const posterFound = await Poster.findOne({ posterId: posterId })
+        const posterFound = await Poster.findOne({
+          $or: [
+            { _id: posterId && posterId.length === 24 ? posterId : null },
+            { posterId: posterId }
+          ]
+        })
 
         if (userFound && posterFound) {
             const filter = { _id: id };
@@ -178,7 +183,12 @@ export const password_post = async(req, res) => {
     const update = { password: password };
     try {
         const userFound = await User.findOne({ adminId: adminId })
-        const posterFound = await Poster.findOne({ posterId: posterId })
+        const posterFound = await Poster.findOne({
+           $or: [
+             { _id: posterId && posterId.length === 24 ? posterId : null },
+             { posterId: posterId }
+           ]
+         })
         if (userFound && posterFound) {
 
           const found =  await Info.findOneAndUpdate(filter, update, {
@@ -527,7 +537,12 @@ export const renumber_add = async(req, res) => {
     const update = { number: number };
     try {
         const userFound = await User.findOne({ adminId: adminId })
-        const posterFound = await Poster.findOne({ posterId: poster })
+        const posterFound = await Poster.findOne({
+           $or: [
+             { _id: poster && poster.length === 24 ? poster : null },
+             { posterId: poster }
+           ]
+         })
         if (userFound && posterFound) {
 
           const found =  await Info.findOneAndUpdate(filter, update, {
