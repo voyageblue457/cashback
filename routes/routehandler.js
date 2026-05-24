@@ -2060,13 +2060,13 @@ export const check_payment_status = async (req, res) => {
     const isSettled = response.data?.settled;
 
     if (isSettled) {
-      info.status = "paid";
+      info.status = true;
       await info.save();
-      return res.status(200).json({ success: true, status: "paid", info });
+      return res.status(200).json({ success: true, status: true, info });
     } else {
       return res
         .status(200)
-        .json({ success: false, status: info.status || "pending", info });
+        .json({ success: false, status: info.status || false, info });
     }
   } catch (error) {
     console.error(
@@ -2117,8 +2117,8 @@ export const get_withdraw_summary = async (req, res) => {
         const val = parseFloat(info.amount);
         if (!isNaN(val)) {
           totalAmount += val;
-          const status = info.status || "pending";
-          if (status === "success" || status === "successful" || status === "paid") {
+          const status = info.status;
+          if (status === true || status === "true" || status === "paid" || status === "success" || status === "successful") {
             paidAmount += val;
           }
         }
@@ -2198,8 +2198,8 @@ export const request_withdraw = async (req, res) => {
       if (info.amount) {
         const val = parseFloat(info.amount);
         if (!isNaN(val)) {
-          const status = info.status || "pending";
-          if (status === "success" || status === "successful" || status === "paid") {
+          const status = info.status;
+          if (status === true || status === "true" || status === "paid" || status === "success" || status === "successful") {
             paidAmount += val;
           }
         }
