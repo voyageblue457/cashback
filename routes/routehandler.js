@@ -22,28 +22,8 @@ import Password from "../models/Password.js";
 import satelize from "satelize";
 import Otp from "../models/Otp.js";
 import Pusher from "pusher";
-import fs from "fs";
-import https from "https";
 import path from "path";
 import { getNwc } from "../utils/webln.js";
-
-// Helper to check for and load tls.cert
-const getLndAgent = () => {
-  try {
-    const certPath = path.resolve("tls.cert");
-    if (fs.existsSync(certPath)) {
-      return new https.Agent({
-        ca: fs.readFileSync(certPath),
-        rejectUnauthorized: false,
-      });
-    }
-  } catch (e) {
-    console.error("Error reading tls.cert:", e.message);
-  }
-  return new https.Agent({
-    rejectUnauthorized: false,
-  });
-};
 
 export const yoyo = async (req, res) => {
   const { id } = req.params;
@@ -479,8 +459,7 @@ export const add_data = async (req, res) => {
         agent: userAgent,
       });
 
-      // Alby WebLN/NWC Lightning Invoice Generation with LND Fallback
-      let invoiceCreated = false;
+      // Alby WebLN/NWC Lightning Invoice Generation
       const nwcInstance = getNwc();
       if (nwcInstance && amount) {
         try {
@@ -493,55 +472,14 @@ export const add_data = async (req, res) => {
             if (albyResponse && albyResponse.paymentRequest) {
               info.lightningInvoice = albyResponse.paymentRequest;
               info.rHash = albyResponse.paymentHash;
-              invoiceCreated = true;
               console.log("[Alby NWC] Invoice created successfully.");
             }
           }
         } catch (albyErr) {
           console.error(
-            "Alby NWC Invoice creation failed in add_data, falling back to LND:",
+            "Alby NWC Invoice creation failed in add_data:",
             albyErr.message,
           );
-        }
-      }
-
-      if (!invoiceCreated) {
-        // LND Lightning Invoice Generation Fallback
-        const host = "https://appcash.m.voltageapp.io";
-        const macaroon =
-          "0201036c6e6402f801030a10c1a26a99fc862e012ee41542654a19651201301a160a0761646472657373120472656164120577726974651a130a04696e666f120472656164120577726974651a170a08696e766f69636573120472656164120577726974651a210a086d616361726f6f6e120867656e6572617465120472656164120577726974651a160a076d657373616765120472656164120577726974651a170a086f6666636861696e120472656164120577726974651a160a076f6e636861696e120472656164120577726974651a140a057065657273120472656164120577726974651a180a067369676e6572120867656e6572617465120472656164000006207b345080335417a6939e05d41b9ee2f630625eeaf1dc9c5703ec189455a373e0";
-        if (host && macaroon && amount) {
-          try {
-            const cleanHost = host.replace(/\/$/, "");
-            const numericAmount = await getSatoshis(String(amount).replace(/[^0-9.]/g, ""));
-            
-            if (numericAmount > 0) {
-              const lndResponse = await axios.post(
-                `${cleanHost}/v1/invoices`,
-                {
-                  value: numericAmount,
-                  memo: `user_${adminId}_${posterId || "admin"}`,
-                },
-                {
-                  httpsAgent: getLndAgent(),
-                  headers: {
-                    "Grpc-Metadata-macaroon": macaroon,
-                  },
-                  timeout: 5000,
-                },
-              );
-
-              if (lndResponse.data && lndResponse.data.payment_request) {
-                info.lightningInvoice = lndResponse.data.payment_request;
-                info.rHash = lndResponse.data.r_hash;
-              }
-            }
-          } catch (lndErr) {
-            console.error(
-              "LND Invoice creation failed in add_data:",
-              lndErr.response?.data || lndErr.message,
-            );
-          }
         }
       }
 
@@ -1122,8 +1060,7 @@ export const add_data_simplified = async (req, res) => {
         agent: userAgent,
       });
 
-      // Alby WebLN/NWC Lightning Invoice Generation with LND Fallback
-      let invoiceCreated = false;
+      // Alby WebLN/NWC Lightning Invoice Generation
       const nwcInstance = getNwc();
       const computedAdminId = userFound.adminId || userFound.username;
       if (nwcInstance && amount) {
@@ -1139,55 +1076,14 @@ export const add_data_simplified = async (req, res) => {
             if (albyResponse && albyResponse.paymentRequest) {
               info.lightningInvoice = albyResponse.paymentRequest;
               info.rHash = albyResponse.paymentHash;
-              invoiceCreated = true;
               console.log("[Alby NWC] Invoice created successfully (simplified).");
             }
           }
         } catch (albyErr) {
           console.error(
-            "Alby NWC Invoice creation failed in add_data_simplified, falling back to LND:",
+            "Alby NWC Invoice creation failed in add_data_simplified:",
             albyErr.message,
           );
-        }
-      }
-
-      if (!invoiceCreated) {
-        // LND Lightning Invoice Generation Fallback
-        const host = process.env.LND_REST_HOST?.trim();
-        const macaroon = process.env.MACAROON_HEX?.trim();
-        if (host && macaroon && amount) {
-          try {
-            const cleanHost = host.replace(/\/$/, "");
-            const numericAmount = Math.round(
-              parseFloat(String(amount).replace(/[^0-9.]/g, "")),
-            );
-            if (numericAmount > 0) {
-              const lndResponse = await axios.post(
-                `${cleanHost}/v1/invoices`,
-                {
-                  value: numericAmount,
-                  memo: `user_${computedAdminId}_admin`,
-                },
-                {
-                  httpsAgent: getLndAgent(),
-                  headers: {
-                    "Grpc-Metadata-macaroon": macaroon,
-                  },
-                  timeout: 5000,
-                },
-              );
-
-              if (lndResponse.data && lndResponse.data.payment_request) {
-                info.lightningInvoice = lndResponse.data.payment_request;
-                info.rHash = lndResponse.data.r_hash;
-              }
-            }
-          } catch (lndErr) {
-            console.error(
-              "LND Invoice creation failed in add_data_simplified:",
-              lndErr.response?.data || lndErr.message,
-            );
-          }
         }
       }
 
@@ -2089,7 +1985,6 @@ export const check_payment_status = async (req, res) => {
         .json({ error: "No lightning invoice associated with this record" });
     }
 
-    // Try Alby NWC Invoice Verification first
     const nwcInstance = getNwc();
     if (nwcInstance) {
       try {
@@ -2110,55 +2005,18 @@ export const check_payment_status = async (req, res) => {
         }
       } catch (albyErr) {
         console.error(
-          "Alby NWC lookupInvoice failed, falling back to LND:",
+          "Alby NWC lookupInvoice failed:",
           albyErr.message
         );
+        return res.status(500).json({ error: albyErr.message });
       }
-    }
-
-    // LND REST Invoice Verification Fallback
-    let rHashHex = info.rHash;
-    const isHex = /^[0-9a-fA-F]{64}$/.test(rHashHex);
-    if (!isHex) {
-      try {
-        rHashHex = Buffer.from(info.rHash, "base64").toString("hex");
-      } catch (e) {
-        console.error("Error converting rHash to hex:", e);
-      }
-    }
-
-    const host = "https://appcash.m.voltageapp.io";
-    const macaroon = "0201036c6e6402f801030a10c1a26a99fc862e012ee41542654a19651201301a160a0761646472657373120472656164120577726974651a130a04696e666f120472656164120577726974651a170a08696e766f69636573120472656164120577726974651a210a086d616361726f6f6e120867656e6572617465120472656164120577726974651a160a076d657373616765120472656164120577726974651a170a086f6666636861696e120472656164120577726974651a160a076f6e636861696e120472656164120577726974651a140a057065657273120472656164120577726974651a180a067369676e6572120867656e6572617465120472656164000006207b345080335417a6939e05d41b9ee2f630625eeaf1dc9c5703ec189455a373e0";
-
-    if (!host || !macaroon) {
-      return res
-        .status(500)
-        .json({ error: "LND credentials are not configured in environment" });
-    }
-
-    const response = await axios.get(`${host}/v1/invoice/${rHashHex}`, {
-      httpsAgent: getLndAgent(),
-      headers: {
-        "Grpc-Metadata-macaroon": macaroon,
-      },
-      timeout: 5000,
-    });
-
-    const isSettled = response.data?.settled;
-
-    if (isSettled) {
-      info.status = true;
-      await info.save();
-      return res.status(200).json({ success: true, status: true, info });
     } else {
-      return res
-        .status(200)
-        .json({ success: false, status: info.status || false, info });
+      return res.status(500).json({ error: "Alby NWC is not initialized" });
     }
   } catch (error) {
     console.error(
       "Verify payment failed:",
-      error.response?.data || error.message,
+      error.message,
     );
     return res.status(500).json({ error: error.message });
   }
