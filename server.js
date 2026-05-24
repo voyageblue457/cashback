@@ -12,6 +12,7 @@ import cors from 'cors'
 import router  from './routes/authroute.js'
 import connectDB from './database.js'
 import rateLimitMiddleware from "./ratelimiter.js"
+import { initNwc } from './utils/webln.js'
 
 
 let interval;
@@ -26,6 +27,7 @@ const server=http.createServer(app)
 
 
 connectDB()
+initNwc()
 
 
 
