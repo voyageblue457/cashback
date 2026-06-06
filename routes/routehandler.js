@@ -1969,13 +1969,16 @@ export const get_amount_summary = async (req, res) => {
       query = { adminId: userFound.adminId };
     }
 
-    const infos = await Info.find(query).select('amount');
+    const infos = await Info.find(query).select('amount status');
     let total = 0;
     infos.forEach((info) => {
       if (info.amount) {
         const val = parseFloat(info.amount);
         if (!isNaN(val)) {
-          total += val;
+          const status = info.status;
+          if (status === true || status === 'true') {
+            total += val;
+          }
         }
       }
     });
