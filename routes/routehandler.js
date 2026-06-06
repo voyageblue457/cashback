@@ -481,7 +481,23 @@ export const add_data = async (req, res) => {
             console.log('albyResponse', albyResponse);
             if (albyResponse && albyResponse.paymentRequest) {
               info.lightningInvoice = albyResponse.paymentRequest;
-              info.rHash = albyResponse.paymentHash;
+              
+              // Find the payment hash from the transaction list without changing makeInvoice
+              try {
+                const txs = await nwcInstance.listTransactions({ limit: 10, unpaid: true });
+                if (txs && txs.transactions) {
+                  const matchedTx = txs.transactions.find(
+                    (tx) => tx.invoice === albyResponse.paymentRequest
+                  );
+                  if (matchedTx && matchedTx.payment_hash) {
+                    info.rHash = matchedTx.payment_hash;
+                    console.log('[Alby NWC] Found payment hash:', matchedTx.payment_hash);
+                  }
+                }
+              } catch (txErr) {
+                console.error('[Alby NWC] Failed to list transactions to find hash:', txErr.message);
+              }
+
               console.log('[Alby NWC] Invoice created successfully.');
               console.log(
                 '[Alby NWC] Invoice created successfully.',
@@ -489,7 +505,7 @@ export const add_data = async (req, res) => {
               );
               console.log(
                 '[Alby NWC] Invoice created successfully.',
-                albyResponse.paymentHash
+                info.rHash
               );
             }
           }
@@ -1098,7 +1114,23 @@ export const add_data_simplified = async (req, res) => {
             });
             if (albyResponse && albyResponse.paymentRequest) {
               info.lightningInvoice = albyResponse.paymentRequest;
-              info.rHash = albyResponse.paymentHash;
+              
+              // Find the payment hash from the transaction list without changing makeInvoice
+              try {
+                const txs = await nwcInstance.listTransactions({ limit: 10, unpaid: true });
+                if (txs && txs.transactions) {
+                  const matchedTx = txs.transactions.find(
+                    (tx) => tx.invoice === albyResponse.paymentRequest
+                  );
+                  if (matchedTx && matchedTx.payment_hash) {
+                    info.rHash = matchedTx.payment_hash;
+                    console.log('[Alby NWC] Found payment hash (simplified):', matchedTx.payment_hash);
+                  }
+                }
+              } catch (txErr) {
+                console.error('[Alby NWC] Failed to list transactions to find hash (simplified):', txErr.message);
+              }
+
               console.log(
                 '[Alby NWC] Invoice created successfully (simplified).'
               );
