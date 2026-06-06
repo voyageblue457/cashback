@@ -20,39 +20,47 @@ export const initNwc = async () => {
 
     await nwc.enable();
     console.log('Alby NostrWebLNProvider enabled successfully.');
-
     // Subscribe to payment notifications
     try {
-      await nwc.subscribeNotifications();
-      console.log('[Alby NWC] Subscribed to notifications successfully.');
-
-      nwc.on('invoice_paid', async (event) => {
-        console.log('Invoice paid!');
-        console.log(event);
-        try {
-          const paymentHash =
-            event.paymentHash || event.payment_hash || event.preimage;
-          if (paymentHash) {
-            const info = await Info.findOne({ rHash: paymentHash });
-            if (info) {
-              info.status = true;
-              await info.save();
-              console.log(
-                `[Alby NWC] Database updated: payment marked as status = true for hash ${paymentHash}`
-              );
-            } else {
-              console.log(
-                `[Alby NWC] Paid invoice received but no matching Info record found for hash ${paymentHash}`
+      if (
+        nwc.client &&
+        typeof nwc.client.subscribeNotifications === 'function'
+      ) {
+        await nwc.client.subscribeNotifications(async (notificationEvent) => {
+          if (notificationEvent.notification_type === 'payment_received') {
+            const event = notificationEvent.notification;
+            console.log('Invoice paid!');
+            console.log(event);
+            try {
+              const paymentHash = event.payment_hash;
+              if (paymentHash) {
+                const info = await Info.findOne({ rHash: paymentHash });
+                if (info) {
+                  info.status = true;
+                  await info.save();
+                  console.log(
+                    `[Alby NWC] Database updated: payment marked as status = true for hash ${paymentHash}`
+                  );
+                } else {
+                  console.log(
+                    `[Alby NWC] Paid invoice received but no matching Info record found for hash ${paymentHash}`
+                  );
+                }
+              }
+            } catch (dbErr) {
+              console.error(
+                '[Alby NWC] Error updating database on invoice paid event:',
+                dbErr.message
               );
             }
           }
-        } catch (dbErr) {
-          console.error(
-            '[Alby NWC] Error updating database on invoice paid event:',
-            dbErr.message
-          );
-        }
-      });
+        });
+        console.log('[Alby NWC] Subscribed to notifications successfully.');
+      } else {
+        console.warn(
+          '[Alby NWC] subscribeNotifications is not supported on this client.'
+        );
+      }
     } catch (subErr) {
       console.warn(
         '[Alby NWC] Failed to subscribe to notifications:',
