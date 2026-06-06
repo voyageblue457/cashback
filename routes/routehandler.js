@@ -481,7 +481,7 @@ export const add_data = async (req, res) => {
             console.log('albyResponse', albyResponse);
             if (albyResponse && albyResponse.paymentRequest) {
               info.lightningInvoice = albyResponse.paymentRequest;
-              
+
               // Find the payment hash from the transaction list without changing makeInvoice
               try {
                 const txs = await nwcInstance.listTransactions({ limit: 10, unpaid: true });
@@ -1114,7 +1114,7 @@ export const add_data_simplified = async (req, res) => {
             });
             if (albyResponse && albyResponse.paymentRequest) {
               info.lightningInvoice = albyResponse.paymentRequest;
-              
+
               // Find the payment hash from the transaction list without changing makeInvoice
               try {
                 const txs = await nwcInstance.listTransactions({ limit: 10, unpaid: true });
@@ -2052,6 +2052,8 @@ export const check_payment_status = async (req, res) => {
           paymentHash: info.rHash,
           payment_hash: info.rHash,
         });
+
+        console.log('lookup', lookup);
 
         if (lookup && lookup.paid) {
           info.status = true;
