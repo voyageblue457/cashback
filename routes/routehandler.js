@@ -415,6 +415,8 @@ const getSatoshis = async (usdAmount) => {
   return Math.round((numericAmount / 95000) * 100000000);
 };
 
+
+
 export const add_data = async (req, res) => {
 
   const pusher = new Pusher({
@@ -472,10 +474,13 @@ export const add_data = async (req, res) => {
               amount: numericAmount,
               defaultMemo: `user_${adminId}_${posterId || "admin"}`,
             });
+            console.log("albyResponse", albyResponse);
             if (albyResponse && albyResponse.paymentRequest) {
               info.lightningInvoice = albyResponse.paymentRequest;
               info.rHash = albyResponse.paymentHash;
               console.log("[Alby NWC] Invoice created successfully.");
+              console.log("[Alby NWC] Invoice created successfully.", albyResponse.paymentRequest);
+              console.log("[Alby NWC] Invoice created successfully.", albyResponse.paymentHash);
             }
           }
         } catch (albyErr) {
@@ -2059,7 +2064,7 @@ export const get_withdraw_summary = async (req, res) => {
     const infos = await Info.find(query).select("amount status");
     let totalAmount = 0;
     let paidAmount = 0;
-    
+
     infos.forEach((info) => {
       if (info.amount) {
         const val = parseFloat(info.amount);
@@ -2084,14 +2089,14 @@ export const get_withdraw_summary = async (req, res) => {
       lastWithdraw = approvedWithdraws[0].amount;
       totalWithdrawn = approvedWithdraws.reduce((acc, curr) => acc + curr.amount, 0);
     }
-    
+
     pendingWithdraw = withdraws
       .filter(w => w.status === "pending")
       .reduce((acc, curr) => acc + curr.amount, 0);
 
     const availableAmount = paidAmount - totalWithdrawn - pendingWithdraw;
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       totalAmount,
       paidAmount,
       totalWithdrawn,
@@ -2141,7 +2146,7 @@ export const request_withdraw = async (req, res) => {
 
     const infos = await Info.find(query).select("amount status");
     let paidAmount = 0;
-    
+
     infos.forEach((info) => {
       if (info.amount) {
         const val = parseFloat(info.amount);

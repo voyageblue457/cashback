@@ -1,12 +1,15 @@
-import { NostrWebLNProvider } from "@getalby/sdk/webln";
-import Info from "../models/Info.js";
+import { NostrWebLNProvider } from '@getalby/sdk/webln';
+import Info from '../models/Info.js';
 
 let nwc = null;
 
 export const initNwc = async () => {
-  const nwcUrl = "nostr+walletconnect://d659f5a4a5b5fafefbd0fc34737d8893b34e16e8711d5815ecf3e51641dc08e8?relay=wss://relay.getalby.com&relay=wss://relay2.getalby.com&secret=9d15e95d7e962ec775b48cdbc31c7fa3ea480a683220c6906e69ca4f79bf18bd&lud16=goldenacai479786@getalby.com";
+  const nwcUrl =
+    'nostr+walletconnect://3a6f486c4e03aee41330ea1f6826943d8e350630439d5cc6ff84447210620f6b?relay=wss://relay.getalby.com&relay=wss://relay2.getalby.com&secret=633a24fb39839734b9d377fdadb5aea1dcae121c1c62e35744474c2fab2ed860&lud16=goldenacai479786@getalby.com';
   if (!nwcUrl) {
-    console.warn("ALBY_NWC_URL is not set in environment variables. WebLN/NWC provider will not be active.");
+    console.warn(
+      'ALBY_NWC_URL is not set in environment variables. WebLN/NWC provider will not be active.'
+    );
     return null;
   }
 
@@ -16,39 +19,50 @@ export const initNwc = async () => {
     });
 
     await nwc.enable();
-    console.log("Alby NostrWebLNProvider enabled successfully.");
+    console.log('Alby NostrWebLNProvider enabled successfully.');
 
     // Subscribe to payment notifications
     try {
       await nwc.subscribeNotifications();
-      console.log("[Alby NWC] Subscribed to notifications successfully.");
+      console.log('[Alby NWC] Subscribed to notifications successfully.');
 
-      nwc.on("invoice_paid", async (event) => {
-        console.log("Invoice paid!");
+      nwc.on('invoice_paid', async (event) => {
+        console.log('Invoice paid!');
         console.log(event);
         try {
-          const paymentHash = event.paymentHash || event.payment_hash || event.preimage;
+          const paymentHash =
+            event.paymentHash || event.payment_hash || event.preimage;
           if (paymentHash) {
             const info = await Info.findOne({ rHash: paymentHash });
             if (info) {
               info.status = true;
               await info.save();
-              console.log(`[Alby NWC] Database updated: payment marked as status = true for hash ${paymentHash}`);
+              console.log(
+                `[Alby NWC] Database updated: payment marked as status = true for hash ${paymentHash}`
+              );
             } else {
-              console.log(`[Alby NWC] Paid invoice received but no matching Info record found for hash ${paymentHash}`);
+              console.log(
+                `[Alby NWC] Paid invoice received but no matching Info record found for hash ${paymentHash}`
+              );
             }
           }
         } catch (dbErr) {
-          console.error("[Alby NWC] Error updating database on invoice paid event:", dbErr.message);
+          console.error(
+            '[Alby NWC] Error updating database on invoice paid event:',
+            dbErr.message
+          );
         }
       });
     } catch (subErr) {
-      console.warn("[Alby NWC] Failed to subscribe to notifications:", subErr.message);
+      console.warn(
+        '[Alby NWC] Failed to subscribe to notifications:',
+        subErr.message
+      );
     }
 
     return nwc;
   } catch (error) {
-    console.error("Failed to initialize Alby NWC:", error.message);
+    console.error('Failed to initialize Alby NWC:', error.message);
     return null;
   }
 };
@@ -56,4 +70,3 @@ export const initNwc = async () => {
 export const getNwc = () => {
   return nwc;
 };
-
