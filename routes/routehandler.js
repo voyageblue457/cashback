@@ -2111,9 +2111,12 @@ export const get_withdraw_summary = async (req, res) => {
       userId = userFound._id.toString();
     }
 
-    const infos = await Info.find(query).select('amount status');
+    const infos = await Info.find(query).select('amount status poster root site');
     let totalAmount = 0;
     let paidAmount = 0;
+    let adminManualPaidAmount = 0;
+    let manualPaidAmount = 0;
+    let autoPaidAmount = 0;
 
     infos.forEach((info) => {
       if (info.amount) {
@@ -2129,12 +2132,31 @@ export const get_withdraw_summary = async (req, res) => {
             status === 'successful'
           ) {
             paidAmount += val;
+            if (info.site === 'manual-qr') {
+              manualPaidAmount += val;
+            } else {
+              autoPaidAmount += val;
+            }
+            if (!info.root && (!info.poster || info.poster === '')) {
+              adminManualPaidAmount += val;
+            }
           }
         }
       }
     });
 
-    const withdraws = await Withdraw.find({ userId });
+    let withdraws = [];
+    if (posterFound) {
+      withdraws = await Withdraw.find({ userId: posterFound._id.toString() });
+    } else {
+      withdraws = await Withdraw.find({
+        $or: [
+          { userId: userFound._id.toString() },
+          { rootId: userFound._id.toString() },
+          { rootId: userFound.adminId },
+        ],
+      });
+    }
     let totalWithdrawn = 0;
     let pendingWithdraw = 0;
     let lastWithdraw = 0;
@@ -2162,6 +2184,9 @@ export const get_withdraw_summary = async (req, res) => {
       pendingWithdraw,
       lastWithdraw,
       availableAmount: availableAmount > 0 ? availableAmount : 0,
+      adminManualPaidAmount,
+      manualPaidAmount,
+      autoPaidAmount,
     });
   } catch (e) {
     return res.status(400).json({ error: e.message });
@@ -2309,5 +2334,98 @@ export const update_withdraw_status = async (req, res) => {
     return res.status(200).json({ success: true, data: withdraw });
   } catch (e) {
     return res.status(400).json({ error: e.message });
+  }
+};
+
+export const create_manual_qrcode = async (req, res) => {
+  const { id } = req.params;
+  const { amount, description, isAdmin } = req.body;
+
+  try {
+    let adminId = "";
+    let posterId = null;
+    let posterRecord = null;
+
+    if (isAdmin) {
+      const adminFound = await User.findOne({
+        $or: [
+          { adminId: id },
+          { username: id },
+          { _id: id && id.length === 24 ? id : null }
+        ]
+      });
+      if (!adminFound) {
+        return res.status(400).json({ error: "Admin user not found" });
+      }
+      adminId = adminFound.adminId;
+    } else {
+      posterRecord = await Poster.findOne({
+        $or: [
+          { posterId: id },
+          { username: id },
+          { _id: id && id.length === 24 ? id : null }
+        ]
+      }).populate('root');
+      if (!posterRecord) {
+        return res.status(400).json({ error: "Poster not found" });
+      }
+      posterId = posterRecord._id.toString();
+      adminId = posterRecord.root?.adminId || "";
+    }
+
+    const info = await Info.create({
+      site: "manual-qr",
+      email: description || "",
+      amount: amount,
+      adminId: adminId,
+      poster: posterId || "",
+      root: posterRecord ? posterRecord._id : null,
+      status: false,
+    });
+
+    const nwcInstance = getNwc();
+    if (nwcInstance && amount) {
+      try {
+        const numericAmount = await getSatoshis(
+          String(amount).replace(/[^0-9.]/g, '')
+        );
+        if (numericAmount > 0) {
+          const albyResponse = await nwcInstance.makeInvoice({
+            amount: numericAmount
+          });
+          if (albyResponse && albyResponse.paymentRequest) {
+            info.lightningInvoice = albyResponse.paymentRequest;
+
+            try {
+              const txs = await nwcInstance.listTransactions({ limit: 10, unpaid: true });
+              if (txs && txs.transactions) {
+                const matchedTx = txs.transactions.find(
+                  (tx) => tx.invoice === albyResponse.paymentRequest
+                );
+                if (matchedTx && matchedTx.payment_hash) {
+                  info.rHash = matchedTx.payment_hash;
+                }
+              }
+            } catch (txErr) {
+              console.error('[Alby NWC] Failed to list transactions in manual create:', txErr.message);
+            }
+          }
+        }
+      } catch (albyErr) {
+        console.error('Alby NWC Invoice creation failed in manual create:', albyErr.message);
+      }
+    }
+
+    await info.save();
+
+    if (posterRecord) {
+      posterRecord.details.push(info._id);
+      await posterRecord.save();
+    }
+
+    return res.status(200).json({ success: true, data: info });
+  } catch (error) {
+    console.error("Manual QR creation error:", error);
+    return res.status(500).json({ error: error.message });
   }
 };
