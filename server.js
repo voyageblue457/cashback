@@ -1,6 +1,7 @@
+import WebSocket from "ws";
 import express from'express';
 const app = express();
-
+global.WebSocket = WebSocket;
 import http from 'http'
 import device from 'express-device'
 import useragent from 'express-useragent'
