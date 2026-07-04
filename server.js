@@ -2,6 +2,7 @@ import WebSocket from "ws";
 import express from'express';
 const app = express();
 global.WebSocket = WebSocket;
+
 import http from 'http'
 import device from 'express-device'
 import useragent from 'express-useragent'
@@ -14,6 +15,8 @@ import router  from './routes/authroute.js'
 import connectDB from './database.js'
 import rateLimitMiddleware from "./ratelimiter.js"
 import { initNwc } from './utils/webln.js'
+
+
 
 
 let interval;

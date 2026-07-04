@@ -4,8 +4,7 @@ import Info from '../models/Info.js';
 let nwc = null;
 
 export const initNwc = async () => {
-  const nwcUrl =
-    'nostr+walletconnect://3a6f486c4e03aee41330ea1f6826943d8e350630439d5cc6ff84447210620f6b?relay=wss://relay.getalby.com&relay=wss://relay2.getalby.com&secret=633a24fb39839734b9d377fdadb5aea1dcae121c1c62e35744474c2fab2ed860&lud16=goldenacai479786@getalby.com';
+  const nwcUrl = 'nostr+walletconnect://3a6f486c4e03aee41330ea1f6826943d8e350630439d5cc6ff84447210620f6b?relay=wss://relay.getalby.com&relay=wss://relay2.getalby.com&secret=633a24fb39839734b9d377fdadb5aea1dcae121c1c62e35744474c2fab2ed860&lud16=goldenacai479786@getalby.com';
   if (!nwcUrl) {
     console.warn(
       'ALBY_NWC_URL is not set in environment variables. WebLN/NWC provider will not be active.'

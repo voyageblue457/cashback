@@ -111,6 +111,7 @@ export const login_post = async (req, res) => {
           username: user.username,
           id: user._id,
           admin: user.admin,
+          superAdmin: user.superAdmin || false,
           qrCodeStatus: user.qrCodeStatus,
           verifyId: user.verifyId,
           showTagField: user.showTagField,
@@ -641,15 +642,47 @@ export const delete_info = async (req, res) => {
 };
 
 export const link_add = async (req, res) => {
-  const { linkName, targetUrl, root } = req.body;
+  const {
+    linkName,
+    targetUrl,
+    root,
+    theme,
+    fixedAmount,
+    minAmount,
+    maxAmount,
+    username,
+    title,
+    brandName,
+    domain,
+  } = req.body;
   try {
     const link = await Link.findOne({ linkName });
     if (link) {
-      link.targetUrl = targetUrl;
+      if (targetUrl !== undefined) link.targetUrl = targetUrl;
+      if (theme !== undefined) link.theme = theme;
+      if (fixedAmount !== undefined) link.fixedAmount = fixedAmount;
+      if (minAmount !== undefined) link.minAmount = minAmount;
+      if (maxAmount !== undefined) link.maxAmount = maxAmount;
+      if (username !== undefined) link.username = username;
+      if (title !== undefined) link.title = title;
+      if (brandName !== undefined) link.brandName = brandName;
+      if (domain !== undefined) link.domain = domain;
       await link.save();
       return res.status(200).json({ status: 'updated' });
     }
-    await Link.create({ linkName, targetUrl, root });
+    await Link.create({
+      linkName,
+      targetUrl,
+      root,
+      theme: theme || 'Cash Green',
+      fixedAmount: fixedAmount || 'Open',
+      minAmount: minAmount !== undefined ? minAmount : 1,
+      maxAmount: maxAmount !== undefined ? maxAmount : 2000,
+      username,
+      title,
+      brandName,
+      domain,
+    });
     return res.status(200).json({ status: 'created' });
   } catch (e) {
     res.status(400).json({ e: 'error' });
@@ -998,11 +1031,12 @@ export const site_exist_two_params = async (req, res) => {
           adminId,
           posterId,
           sitename: siteamount,
+          link: sitefound,
         });
       }
       return res
         .status(200)
-        .json({ success: 'exists', id: sitefound._id, adminId, posterId });
+        .json({ success: 'exists', id: sitefound._id, adminId, posterId, link: sitefound });
     }
     return res.status(200).json({ success: 'not exist' });
   } catch (e) {
@@ -1912,20 +1946,79 @@ export const dynamic_link_get = async (req, res) => {
   const { id } = req.params;
   try {
     const adminUser = await User.findById(id);
+    let links = [];
 
     if (adminUser && adminUser.admin) {
       const posters = await Poster.find({ root: id });
       const posterIds = posters.map((p) => p._id);
 
-      const links = await Link.find({
+      links = await Link.find({
         $or: [{ root: id }, { root: { $in: posterIds } }],
       }).sort({ createdAt: -1 });
-
-      return res.status(200).json({ data: links });
+    } else {
+      links = await Link.find({ root: id }).sort({ createdAt: -1 });
     }
 
-    const links = await Link.find({ root: id }).sort({ createdAt: -1 });
-    return res.status(200).json({ data: links });
+    // Enrich with click/invoice counts and owner details
+    const linkNames = links.map((l) => l.linkName).filter(Boolean);
+    const clicks = await Click.find({ site: { $in: linkNames } });
+    const infos = await Info.find({ site: { $in: linkNames } });
+
+    const posterIds = links.map((l) => l.root).filter(Boolean);
+    const posters = await Poster.find({ _id: { $in: posterIds } }).populate('root');
+    const posterMap = new Map(posters.map((p) => [p._id.toString(), p]));
+
+    const userIds = links.map((l) => l.root).filter(Boolean);
+    const users = await User.find({
+      $or: [
+        { _id: { $in: userIds } },
+        { _id: { $in: posters.map((p) => p.root?._id).filter(Boolean) } },
+      ],
+    });
+    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+
+    const clickMap = new Map();
+    clicks.forEach((c) => {
+      clickMap.set(c.site, (clickMap.get(c.site) || 0) + (c.click || 0));
+    });
+
+    const infoMap = new Map();
+    infos.forEach((i) => {
+      infoMap.set(i.site, (infoMap.get(i.site) || 0) + 1);
+    });
+
+    const enrichedLinks = links.map((l) => {
+      const lObj = l.toObject();
+      lObj.clicks = clickMap.get(l.linkName) || 0;
+      lObj.invoices = infoMap.get(l.linkName) || 0;
+
+      const poster = posterMap.get(l.root?.toString());
+      if (poster) {
+        lObj.owner = {
+          name: poster.username,
+          email: poster.root?.email || '',
+          type: 'Reseller',
+        };
+      } else {
+        const user = userMap.get(l.root?.toString());
+        if (user) {
+          lObj.owner = {
+            name: user.username,
+            email: user.email || '',
+            type: 'User',
+          };
+        } else {
+          lObj.owner = {
+            name: 'Main account',
+            email: '',
+            type: 'Reseller',
+          };
+        }
+      }
+      return lObj;
+    });
+
+    return res.status(200).json({ data: enrichedLinks });
   } catch (e) {
     return res.status(400).json({ error: e.message });
   }
@@ -1966,7 +2059,11 @@ export const get_amount_summary = async (req, res) => {
       if (!userFound) {
         return res.status(400).json({ error: 'User or Poster not found' });
       }
-      query = { adminId: userFound.adminId };
+      if (userFound.superAdmin) {
+        query = {};
+      } else {
+        query = { adminId: userFound.adminId };
+      }
     }
 
     const infos = await Info.find(query).select('amount status');
@@ -2014,17 +2111,39 @@ export const get_amount_list = async (req, res) => {
       if (!userFound) {
         return res.status(400).json({ error: 'User or Poster not found' });
       }
-      query = { adminId: userFound.adminId };
+      if (userFound.superAdmin) {
+        query = {};
+      } else {
+        query = { adminId: userFound.adminId };
+      }
     }
 
     const infos = await Info.find(query)
       .select(
         'site email amount createdAt adminId poster root status lightningInvoice rHash'
       )
-      .populate('root', 'username')
+      .populate({
+        path: 'root',
+        select: 'username root',
+        populate: {
+          path: 'root',
+          select: 'username',
+        },
+      })
       .sort({ createdAt: -1 });
 
-    return res.status(200).json({ success: true, data: infos });
+    // Look up admins by adminId to make sure we have their usernames
+    const adminIds = [...new Set(infos.map((info) => info.adminId).filter(Boolean))];
+    const users = await User.find({ adminId: { $in: adminIds } }).select('adminId username');
+    const adminMap = new Map(users.map((u) => [u.adminId, u.username]));
+
+    const enrichedInfos = infos.map((info) => {
+      const infoObj = info.toObject();
+      infoObj.adminName = adminMap.get(info.adminId) || 'Admin';
+      return infoObj;
+    });
+
+    return res.status(200).json({ success: true, data: enrichedInfos });
   } catch (e) {
     return res.status(400).json({ error: e.message });
   }
@@ -2312,7 +2431,58 @@ export const get_withdraw_list = async (req, res) => {
       }).sort({ createdAt: -1 });
     }
 
-    return res.status(200).json({ success: true, data: withdraws });
+    // Lookup usernames of owner (userId) and admin (rootId)
+    const userIds = withdraws.map((w) => w.userId).filter(Boolean);
+    const rootIds = withdraws.map((w) => w.rootId).filter(Boolean);
+
+    const posters = await Poster.find({ _id: { $in: userIds } }).populate('root', 'username');
+    const users = await User.find({
+      $or: [
+        { _id: { $in: [...userIds, ...rootIds] } },
+        { adminId: { $in: [...userIds, ...rootIds] } }
+      ]
+    }).select('adminId username admin');
+
+    const posterMap = new Map(posters.map((p) => [p._id.toString(), p]));
+    const userMap = new Map();
+    users.forEach((u) => {
+      userMap.set(u._id.toString(), u);
+      if (u.adminId) {
+        userMap.set(u.adminId, u);
+      }
+    });
+
+    const enrichedWithdraws = withdraws.map((w) => {
+      const wObj = w.toObject();
+      const poster = w.userId ? posterMap.get(w.userId.toString()) : null;
+      if (poster) {
+        wObj.owner = {
+          name: poster.username,
+          type: 'Reseller',
+        };
+        wObj.admin = {
+          name: poster.root?.username || 'N/A',
+        };
+      } else {
+        const user = w.userId ? userMap.get(w.userId.toString()) : null;
+        if (user) {
+          wObj.owner = {
+            name: user.username,
+            type: user.admin ? 'Admin' : 'User',
+          };
+          const rootUser = w.rootId ? userMap.get(w.rootId.toString()) : null;
+          wObj.admin = {
+            name: rootUser?.username || 'N/A',
+          };
+        } else {
+          wObj.owner = { name: 'Unknown', type: 'User' };
+          wObj.admin = { name: 'N/A' };
+        }
+      }
+      return wObj;
+    });
+
+    return res.status(200).json({ success: true, data: enrichedWithdraws });
   } catch (e) {
     return res.status(400).json({ error: e.message });
   }
@@ -2429,3 +2599,103 @@ export const create_manual_qrcode = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+export const get_admin_list = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const requester = await User.findOne({ _id: id });
+    if (!requester || !requester.superAdmin) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    const admins = await User.find({ admin: true, superAdmin: { $ne: true } }).sort({ createdAt: -1 });
+    return res.status(200).json({ data: admins });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+};
+
+export const delete_admin = async (req, res) => {
+  const { id, superAdminId } = req.params;
+  try {
+    const requester = await User.findOne({ _id: superAdminId });
+    if (!requester || !requester.superAdmin) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    
+    // Find the admin user to delete
+    const adminToDelete = await User.findOne({ _id: id });
+    if (!adminToDelete) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    // Delete all posters belonging to this admin
+    await Poster.deleteMany({ root: id });
+
+    // Delete links belonging to this admin (if any)
+    await Link.deleteMany({ root: id });
+
+    // Delete the admin user
+    await User.findByIdAndRemove({ _id: id });
+
+    return res.status(200).json({ success: true });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+};
+
+export const update_admin = async (req, res) => {
+  const { id, superAdminId } = req.params;
+  const {
+    username,
+    password,
+    links,
+    adminId,
+    numOfPostersPermission,
+    validity,
+  } = req.body;
+
+  try {
+    const requester = await User.findOne({ _id: superAdminId });
+    if (!requester || !requester.superAdmin) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    if (username) {
+      const existingUser = await User.findOne({ username: username, _id: { $ne: id } });
+      if (existingUser) {
+        return res.status(400).json({ error: "username exists already" });
+      }
+    }
+
+    if (adminId) {
+      const existingAdminId = await User.findOne({ adminId: adminId, _id: { $ne: id } });
+      if (existingAdminId) {
+        return res.status(400).json({ error: "admin ID exists already" });
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      {
+        username,
+        password,
+        adminId,
+        links,
+        numOfPostersPermission: Number(numOfPostersPermission),
+        validity: Number(validity) * 30,
+        updated_at: Date.now(),
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    return res.status(200).json({ user: updatedUser });
+  } catch (e) {
+    return res.status(400).json({ error: e.message || e });
+  }
+};
+
+
