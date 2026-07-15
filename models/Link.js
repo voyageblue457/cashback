@@ -48,6 +48,10 @@ const linkSchema = new Schema({
         type: String,
         trim: true
     },
+    defaultAmount: {
+        type: Number,
+        default: null
+    },
 
 }, { timestamps: true })
 

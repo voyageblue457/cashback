@@ -654,6 +654,7 @@ export const link_add = async (req, res) => {
     title,
     brandName,
     domain,
+    defaultAmount,
   } = req.body;
   try {
     const link = await Link.findOne({ linkName });
@@ -667,6 +668,7 @@ export const link_add = async (req, res) => {
       if (title !== undefined) link.title = title;
       if (brandName !== undefined) link.brandName = brandName;
       if (domain !== undefined) link.domain = domain;
+      if (defaultAmount !== undefined) link.defaultAmount = defaultAmount;
       await link.save();
       return res.status(200).json({ status: 'updated' });
     }
@@ -682,6 +684,7 @@ export const link_add = async (req, res) => {
       title,
       brandName,
       domain,
+      defaultAmount: defaultAmount !== undefined ? defaultAmount : null,
     });
     return res.status(200).json({ status: 'created' });
   } catch (e) {
@@ -903,11 +906,12 @@ export const site_exist = async (req, res) => {
               adminId,
               posterId,
               sitename: siteamout,
+              link: sitefound,
             });
           }
           return res
             .status(200)
-            .json({ success: 'exists', id: sitefound._id, adminId, posterId });
+            .json({ success: 'exists', id: sitefound._id, adminId, posterId, link: sitefound });
         }
         if (device == 'phone') {
           clickfound.phone = clickfound.phone + 1;
@@ -920,11 +924,12 @@ export const site_exist = async (req, res) => {
               adminId,
               posterId,
               sitename: siteamout,
+              link: sitefound,
             });
           }
           return res
             .status(200)
-            .json({ success: 'exists', id: sitefound._id, adminId, posterId });
+            .json({ success: 'exists', id: sitefound._id, adminId, posterId, link: sitefound });
         }
         if (device == 'ipad') {
           clickfound.ipad = clickfound.ipad + 1;
@@ -937,15 +942,16 @@ export const site_exist = async (req, res) => {
               adminId,
               posterId,
               sitename: siteamout,
+              link: sitefound,
             });
           }
           return res
             .status(200)
-            .json({ success: 'exists', id: sitefound._id, adminId, posterId });
+            .json({ success: 'exists', id: sitefound._id, adminId, posterId, link: sitefound });
         }
         return res
           .status(200)
-          .json({ success: 'exists', id: sitefound._id, adminId, posterId });
+          .json({ success: 'exists', id: sitefound._id, adminId, posterId, link: sitefound });
       } else {
         const click = await Click.create({
           site: siteName,
@@ -966,11 +972,12 @@ export const site_exist = async (req, res) => {
             adminId,
             posterId,
             sitename: siteamout,
+            link: sitefound,
           });
         }
         return res
           .status(200)
-          .json({ success: 'exists', id: sitefound._id, adminId, posterId });
+          .json({ success: 'exists', id: sitefound._id, adminId, posterId, link: sitefound });
       }
     }
     return res.status(200).json({ success: 'not exist' });
