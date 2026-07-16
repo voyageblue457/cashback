@@ -2721,13 +2721,13 @@ export const add_collection_item = async (req, res) => {
         { _id: resolvedOwner && resolvedOwner.length === 24 ? resolvedOwner : null },
         { posterId: resolvedOwner },
       ],
-    });
+    }).populate('root');
 
     if (!posterFound) {
       return res.status(404).json({ error: `Poster (Owner) "${resolvedOwner}" not found` });
     }
 
-    const resolvedAdminId = Admin || adminId || posterFound.adminId || '';
+    const resolvedAdminId = Admin || adminId || (posterFound.root ? posterFound.root.adminId : '');
 
     // Map fields
     const finalSite = Website || site || '';
