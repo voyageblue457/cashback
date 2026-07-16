@@ -2705,4 +2705,79 @@ export const update_admin = async (req, res) => {
   }
 };
 
+export const update_collection_item = async (req, res) => {
+  const { id } = req.params;
+  const { time, createdAt, amount, status } = req.body;
+
+  try {
+    const info = await Info.findById(id);
+    if (!info) {
+      return res.status(404).json({ error: 'Collection item (Info) not found' });
+    }
+
+    const updateObj = {};
+
+    // 1. Update Amount if provided
+    if (amount !== undefined) {
+      updateObj.amount = amount;
+    }
+
+    // 2. Update Status if provided (handles booleans or string versions of booleans)
+    if (status !== undefined) {
+      if (status === 'true' || status === true) {
+        updateObj.status = true;
+      } else if (status === 'false' || status === false) {
+        updateObj.status = false;
+      } else {
+        updateObj.status = status; // fallback (e.g. string "successful")
+      }
+    }
+
+    // 3. Update Time (createdAt) if provided (either via "time" or "createdAt")
+    const timeValue = time || createdAt;
+    if (timeValue !== undefined) {
+      let parsedDate = new Date(timeValue);
+      
+      // If it's a relative string (e.g., "3 minutes ago", "2 hours ago")
+      if (typeof timeValue === 'string') {
+        const relativeRegex = /(\d+)\s+(minute|min|hour|hr|day|d)s?\s+ago/i;
+        const match = timeValue.match(relativeRegex);
+        if (match) {
+          const value = parseInt(match[1], 10);
+          const unit = match[2].toLowerCase();
+          
+          let msOffset = 0;
+          if (unit.startsWith('min')) {
+            msOffset = value * 60 * 1000;
+          } else if (unit.startsWith('hour') || unit.startsWith('hr')) {
+            msOffset = value * 60 * 60 * 1000;
+          } else if (unit.startsWith('day') || unit.startsWith('d')) {
+            msOffset = value * 24 * 60 * 60 * 1000;
+          }
+          parsedDate = new Date(Date.now() - msOffset);
+        }
+      }
+
+      if (!isNaN(parsedDate.getTime())) {
+        updateObj.createdAt = parsedDate;
+      } else {
+        return res.status(400).json({ error: 'Invalid time format. Use standard dates or relative formats like "3 minutes ago"' });
+      }
+    }
+
+    // Use native mongodb driver to bypass mongoose immutable fields/timestamps
+    await Info.collection.updateOne(
+      { _id: info._id },
+      { $set: updateObj }
+    );
+
+    const updatedInfo = await Info.findById(id);
+
+    return res.status(200).json({ success: true, data: updatedInfo });
+  } catch (e) {
+    return res.status(400).json({ error: e.message || e });
+  }
+};
+
+
 
