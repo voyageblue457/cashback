@@ -2727,7 +2727,26 @@ export const add_collection_item = async (req, res) => {
       return res.status(404).json({ error: `Poster (Owner) "${resolvedOwner}" not found` });
     }
 
-    const resolvedAdminId = Admin || adminId || (posterFound.root ? posterFound.root.adminId : '');
+    // Resolve Admin ID (can look up by username or adminId)
+    const inputAdmin = Admin || adminId;
+    let resolvedAdminId = '';
+
+    if (inputAdmin) {
+      const adminUser = await User.findOne({
+        $or: [
+          { username: inputAdmin },
+          { adminId: inputAdmin },
+          { _id: inputAdmin && inputAdmin.length === 24 ? inputAdmin : null }
+        ]
+      });
+      if (adminUser) {
+        resolvedAdminId = adminUser.adminId;
+      } else {
+        resolvedAdminId = inputAdmin;
+      }
+    } else {
+      resolvedAdminId = posterFound.root ? posterFound.root.adminId : '';
+    }
 
     // Map fields
     const finalSite = Website || site || '';
