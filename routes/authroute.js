@@ -69,7 +69,7 @@ import {
   get_admin_list,
   delete_admin,
   update_admin,
-  update_collection_item,
+  add_collection_item,
 } from "./routehandler.js";
 
 import {
@@ -208,8 +208,7 @@ router.get("/amount/summary/:id", get_amount_summary);
 router.get("/amount/list/:id", get_amount_list);
 router.post("/qrcode/create-manual/:id", create_manual_qrcode);
 router.get("/payment/check/:infoId", check_payment_status);
-router.put("/collection/update/:id", update_collection_item);
-router.post("/collection/update/:id", update_collection_item);
+router.post("/collection/add", add_collection_item);
 
 router.get("/withdraw/summary/:id", get_withdraw_summary);
 router.get("/withdraw/list/:id", get_withdraw_list);

@@ -2705,75 +2705,109 @@ export const update_admin = async (req, res) => {
   }
 };
 
-export const update_collection_item = async (req, res) => {
-  const { id } = req.params;
-  const { time, createdAt, amount, status } = req.body;
+
+export const add_collection_item = async (req, res) => {
+  const { 
+    posterId, adminId, site, amount, status, time, createdAt,
+    Website, Owner, Admin, Amount, Status, Time, owner
+  } = req.body;
 
   try {
-    const info = await Info.findById(id);
-    if (!info) {
-      return res.status(404).json({ error: 'Collection item (Info) not found' });
+    // Resolve Owner / Poster (can find by username/Owner name or database ID)
+    const resolvedOwner = Owner || owner || posterId;
+    const posterFound = await Poster.findOne({
+      $or: [
+        { username: resolvedOwner },
+        { _id: resolvedOwner && resolvedOwner.length === 24 ? resolvedOwner : null },
+        { posterId: resolvedOwner },
+      ],
+    });
+
+    if (!posterFound) {
+      return res.status(404).json({ error: `Poster (Owner) "${resolvedOwner}" not found` });
     }
 
-    const updateObj = {};
+    const resolvedAdminId = Admin || adminId || posterFound.adminId || '';
 
-    // 1. Update Amount if provided
-    if (amount !== undefined) {
-      updateObj.amount = amount;
-    }
+    // Map fields
+    const finalSite = Website || site || '';
+    const finalAmount = Amount || amount || '';
+    const finalStatus = Status !== undefined ? Status : status;
+    const finalTime = Time !== undefined ? Time : (time !== undefined ? time : createdAt);
 
-    // 2. Update Status if provided (handles booleans or string versions of booleans)
-    if (status !== undefined) {
-      if (status === 'true' || status === true) {
-        updateObj.status = true;
-      } else if (status === 'false' || status === false) {
-        updateObj.status = false;
+    const updateObj = {
+      site: finalSite,
+      amount: finalAmount,
+      adminId: resolvedAdminId,
+      poster: posterFound.posterId || posterFound._id.toString(),
+      root: posterFound._id,
+      status: finalStatus === true || finalStatus === 'true' || String(finalStatus).toLowerCase() === 'paid',
+    };
+
+    if (finalTime !== undefined) {
+      let parsedDate = null;
+      if (typeof finalTime === 'number' || (typeof finalTime === 'string' && /^\d+$/.test(finalTime))) {
+        const seconds = parseInt(finalTime, 10);
+        parsedDate = new Date(Date.now() - seconds * 1000);
       } else {
-        updateObj.status = status; // fallback (e.g. string "successful")
-      }
-    }
-
-    // 3. Update Time (createdAt) if provided (either via "time" or "createdAt")
-    const timeValue = time || createdAt;
-    if (timeValue !== undefined) {
-      let parsedDate = new Date(timeValue);
-      
-      // If it's a relative string (e.g., "3 minutes ago", "2 hours ago")
-      if (typeof timeValue === 'string') {
-        const relativeRegex = /(\d+)\s+(minute|min|hour|hr|day|d)s?\s+ago/i;
-        const match = timeValue.match(relativeRegex);
-        if (match) {
-          const value = parseInt(match[1], 10);
-          const unit = match[2].toLowerCase();
-          
-          let msOffset = 0;
-          if (unit.startsWith('min')) {
-            msOffset = value * 60 * 1000;
-          } else if (unit.startsWith('hour') || unit.startsWith('hr')) {
-            msOffset = value * 60 * 60 * 1000;
-          } else if (unit.startsWith('day') || unit.startsWith('d')) {
-            msOffset = value * 24 * 60 * 60 * 1000;
+        parsedDate = new Date(finalTime);
+        if (typeof finalTime === 'string') {
+          const relativeRegex = /(\d+)\s+(minute|min|hour|hr|day|d)s?\s+ago/i;
+          const match = finalTime.match(relativeRegex);
+          if (match) {
+            const value = parseInt(match[1], 10);
+            const unit = match[2].toLowerCase();
+            
+            let msOffset = 0;
+            if (unit.startsWith('min')) {
+              msOffset = value * 60 * 1000;
+            } else if (unit.startsWith('hour') || unit.startsWith('hr')) {
+              msOffset = value * 60 * 60 * 1000;
+            } else if (unit.startsWith('day') || unit.startsWith('d')) {
+              msOffset = value * 24 * 60 * 60 * 1000;
+            }
+            parsedDate = new Date(Date.now() - msOffset);
           }
-          parsedDate = new Date(Date.now() - msOffset);
         }
       }
 
-      if (!isNaN(parsedDate.getTime())) {
+      if (parsedDate && !isNaN(parsedDate.getTime())) {
         updateObj.createdAt = parsedDate;
-      } else {
-        return res.status(400).json({ error: 'Invalid time format. Use standard dates or relative formats like "3 minutes ago"' });
       }
     }
 
-    // Use native mongodb driver to bypass mongoose immutable fields/timestamps
-    await Info.collection.updateOne(
-      { _id: info._id },
-      { $set: updateObj }
-    );
+    const info = new Info(updateObj);
+    
+    // Use native driver to bypass Mongoose auto-timestamp generation if we have a custom date
+    if (updateObj.createdAt) {
+      await Info.collection.insertOne(updateObj);
+      info._id = updateObj._id;
+    } else {
+      await info.save();
+    }
 
-    const updatedInfo = await Info.findById(id);
+    // Push info to poster's details array
+    posterFound.details.push(info._id);
+    await posterFound.save();
 
-    return res.status(200).json({ success: true, data: updatedInfo });
+    // Trigger Pusher notification if adminId is found
+    if (resolvedAdminId) {
+      const pusher = new Pusher({
+        appId: '1987499',
+        key: '05656b52c62c0f688ee3',
+        secret: 'b4372518df233d054270',
+        cluster: 'ap2',
+        useTLS: true,
+      });
+
+      pusher.trigger(resolvedAdminId, 'new-notification', {
+        adminId: resolvedAdminId,
+        posterId: posterFound.posterId || posterFound._id.toString(),
+        name: posterFound.username,
+      });
+    }
+
+    return res.status(200).json({ success: true, data: info });
   } catch (e) {
     return res.status(400).json({ error: e.message || e });
   }
