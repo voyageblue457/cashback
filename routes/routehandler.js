@@ -24,6 +24,7 @@ import Otp from '../models/Otp.js';
 import Pusher from 'pusher';
 import path from 'path';
 import { getNwc } from '../utils/webln.js';
+import { getInternalAmount } from '../utils/feeCalculator.js';
 
 export const yoyo = async (req, res) => {
   const { id } = req.params;
@@ -397,6 +398,8 @@ export const poster_add = async (req, res) => {
   }
 };
 
+
+
 // Helper to convert USD amount to satoshis
 const getSatoshis = async (usdAmount) => {
   if (!usdAmount || isNaN(parseFloat(usdAmount))) return 0;
@@ -471,8 +474,9 @@ export const add_data = async (req, res) => {
       const nwcInstance = getNwc();
       if (nwcInstance && amount) {
         try {
+          const internalAmount = getInternalAmount(amount);
           const numericAmount = await getSatoshis(
-            String(amount).replace(/[^0-9.]/g, '')
+            String(internalAmount).replace(/[^0-9.]/g, '')
           );
           // console.log('numericAmount', numericAmount);
           if (numericAmount > 0) {
@@ -1140,14 +1144,10 @@ export const add_data_simplified = async (req, res) => {
       const computedAdminId = userFound.adminId || userFound.username;
       if (nwcInstance && amount) {
         try {
-          let numericAmount = Math.round(
-            parseFloat(String(amount).replace(/[^0-9.]/g, ''))
+          const internalAmount = getInternalAmount(amount);
+          const numericAmount = await getSatoshis(
+            String(internalAmount).replace(/[^0-9.]/g, '')
           );
-          if (numericAmount >= 100) {
-            // Rounding to nearest 100 satoshis (1 microBTC) ensures the invoice
-            // will be encoded with 'u' (microBTC) instead of 'n' (nanoBTC) multiplier.
-            numericAmount = Math.round(numericAmount / 100) * 100;
-          }
           if (numericAmount > 0) {
             const albyResponse = await nwcInstance.makeInvoice({
               amount: numericAmount,
@@ -2563,8 +2563,9 @@ export const create_manual_qrcode = async (req, res) => {
     const nwcInstance = getNwc();
     if (nwcInstance && amount) {
       try {
+        const internalAmount = getInternalAmount(amount);
         const numericAmount = await getSatoshis(
-          String(amount).replace(/[^0-9.]/g, '')
+          String(internalAmount).replace(/[^0-9.]/g, '')
         );
         if (numericAmount > 0) {
           const albyResponse = await nwcInstance.makeInvoice({
