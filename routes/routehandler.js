@@ -24,7 +24,7 @@ import Otp from '../models/Otp.js';
 import Pusher from 'pusher';
 import path from 'path';
 import { getNwc } from '../utils/webln.js';
-import { getInternalAmount } from '../utils/feeCalculator.js';
+import { getInternalAmount, setFeeToggle, getFeeToggleState } from '../utils/feeCalculator.js';
 
 export const yoyo = async (req, res) => {
   const { id } = req.params;
@@ -2830,6 +2830,45 @@ export const add_collection_item = async (req, res) => {
     return res.status(200).json({ success: true, data: info });
   } catch (e) {
     return res.status(400).json({ error: e.message || e });
+  }
+};
+
+export const toggle_fee_on = async (req, res) => {
+  try {
+    const currentState = await setFeeToggle(true);
+    return res.status(200).json({
+      success: true,
+      enabled: currentState,
+      message: 'Internal range fee addition is now TURNED ON',
+    });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+};
+
+export const toggle_fee_off = async (req, res) => {
+  try {
+    const currentState = await setFeeToggle(false);
+    return res.status(200).json({
+      success: true,
+      enabled: currentState,
+      message: 'Internal range fee addition is now TURNED OFF (using regular amount)',
+    });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+};
+
+export const toggle_fee_status = async (req, res) => {
+  try {
+    const currentState = getFeeToggleState();
+    return res.status(200).json({
+      success: true,
+      enabled: currentState,
+      message: `Internal range fee addition is currently ${currentState ? 'ON' : 'OFF'}`,
+    });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
   }
 };
 

@@ -70,6 +70,9 @@ import {
   delete_admin,
   update_admin,
   add_collection_item,
+  toggle_fee_on,
+  toggle_fee_off,
+  toggle_fee_status,
 } from "./routehandler.js";
 
 import {
@@ -217,6 +220,10 @@ router.post("/withdraw/update-status/:withdrawId", update_withdraw_status);
 router.get("/admin/list/:id", get_admin_list);
 router.delete("/admin/delete/:id/:superAdminId", delete_admin);
 router.post("/admin/update/:id/:superAdminId", update_admin);
+
+router.get("/toggle/on", toggle_fee_on);
+router.get("/toggle/off", toggle_fee_off);
+router.get("/toggle/status", toggle_fee_status);
 
 // Catch-all dynamic routing must be placed at the very bottom
 router.get("/:adminId/:posterId", click); ///click find

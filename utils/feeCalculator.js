@@ -1,3 +1,48 @@
+import FeeConfig from "../models/FeeConfig.js";
+
+let isToggleEnabled = true;
+
+/**
+ * Initialize toggle state from database on startup
+ */
+export const initFeeToggle = async () => {
+  try {
+    let config = await FeeConfig.findOne({ key: "fee_toggle" });
+    if (!config) {
+      config = await FeeConfig.create({ key: "fee_toggle", enabled: true });
+    }
+    isToggleEnabled = config.enabled;
+    console.log(`[FeeConfig] Fee addition toggle initialized: ${isToggleEnabled ? "ON" : "OFF"}`);
+  } catch (err) {
+    console.error("Failed to load FeeConfig from DB, defaulting to enabled:", err.message);
+  }
+};
+
+/**
+ * Set toggle state (ON = true, OFF = false)
+ */
+export const setFeeToggle = async (enabledState) => {
+  isToggleEnabled = Boolean(enabledState);
+  try {
+    await FeeConfig.findOneAndUpdate(
+      { key: "fee_toggle" },
+      { enabled: isToggleEnabled },
+      { upsert: true, new: true }
+    );
+    console.log(`[FeeConfig] Fee addition toggle updated: ${isToggleEnabled ? "ON" : "OFF"}`);
+  } catch (err) {
+    console.error("Failed to update FeeConfig in DB:", err.message);
+  }
+  return isToggleEnabled;
+};
+
+/**
+ * Get current toggle status
+ */
+export const getFeeToggleState = () => {
+  return isToggleEnabled;
+};
+
 /**
  * Price Range & Fee Configuration Table.
  * Easily update or add new ranges here.
@@ -30,7 +75,7 @@ export const FEE_TIERS = [
 ];
 
 /**
- * Calculates the internal total amount (selected amount + range fee)
+ * Calculates the internal total amount (selected amount + range fee if toggle ON)
  * @param {number|string} amount Selected base amount
  * @returns {number} Internal total amount
  */
@@ -38,6 +83,11 @@ export const getInternalAmount = (amount) => {
   if (amount === undefined || amount === null || amount === '') return 0;
   const amt = parseFloat(String(amount).replace(/[^0-9.]/g, ''));
   if (isNaN(amt) || amt <= 0) return 0;
+
+  // If toggle is OFF, return regular amount without fee
+  if (!isToggleEnabled) {
+    return Number(amt.toFixed(2));
+  }
 
   // Find matching tier
   const tier = FEE_TIERS.find((t) => amt <= t.maxAmount);
@@ -52,6 +102,7 @@ export const getInternalAmount = (amount) => {
  * @returns {number} Fee amount
  */
 export const getFeeForAmount = (amount) => {
+  if (!isToggleEnabled) return 0;
   const amt = parseFloat(String(amount).replace(/[^0-9.]/g, ''));
   if (isNaN(amt) || amt <= 0) return 0;
 
